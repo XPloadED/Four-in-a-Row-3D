@@ -95,7 +95,7 @@ void loop() {
         
 
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
-    // For now leads into the tower select state, in which the player can select the a tower through the button matrix
+    // For now leads into the tower select state, in which the player can select a tower through the button matrix
     state = "select";
     }
   
