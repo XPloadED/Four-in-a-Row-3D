@@ -32,49 +32,73 @@ void setup() {
   FastLED.setBrightness(50);
 }
 
+// plays the stone drop down animation until it reaches the bottom spot
+void playStoneAnimation(int towerID, int stackHeight, bool startup, CHSV Player){
+  // find led spot of the top of the tower and initialice the mirror stone
+  int runindex = (towerID * 8) + 3;
+  int mirrorstone = runindex + 1;
+  int deltaDuration = 100;
+  
+  if(stackHeight < 3){
+    //Display the stone for deltaduration
+    leds[runindex] = Player;
+    leds[mirrorstone] = Player;
+    FastLED.show();
+    delay(deltaDuration);
+    if(not startup){
+      leds[runindex] = CRGB::Black;
+      leds[mirrorstone] = CRGB::Black;
+      FastLED.show();
+      }
+    
+  }
+
+  // while the tower has empty spaces, repeat until it reaches the state bottom
+  while(stackHeight < 3){
+    runindex = runindex - 1;
+    mirrorstone = mirrorstone + 1;
+    leds[runindex] = Player;
+    leds[mirrorstone] = Player;
+    FastLED.show();
+    delay(deltaDuration = deltaDuration - 20);
+    
+    stackHeight++;
+        
+    if(not startup){
+      leds[runindex] = CRGB::Black;
+      leds[mirrorstone] = CRGB::Black;
+      FastLED.show();
+    if(stackHeight == 3){
+      leds[runindex] = Player;
+      leds[mirrorstone] = Player;
+      FastLED.show();
+      }
+      }
+    }
+  }
+
 void loop() {
 
   //StartUp routine
   if(state == "startup"){
-    
-    /*for(int i = 0, b = 1; i < NUM_LEDS; i++){
-      leds[i] = CRGB::Red;
-      leds[b * 7 - (i % 7)] = CRGB::Red;
-      FastLED.show();
-      delay(1000);
-      
-      leds[i]= CRGB::Black;
-      leds[b * 7 - (i % 7)] = CRGB::Black;
-
-      if((i+1)%4 == 0){
-        i = (b * 8) - 1;
-        b++;
+  
+   
+      for(int towerID = 0; towerID < 16; towerID ++){
+        playStoneAnimation(towerID, random(0,3), true, CHSV(random8(), 255, 255));
         }
-      }*/
-
-    for(int i = 0, b = 1; i < NUM_LEDS; i++){
-      leds[i] = CRGB::Red;
-      FastLED.show();
-      delay(40);
-      
-      leds[i]= CRGB::Black;
-    }
-      
-    for(int i = NUM_LEDS - 1; i >= 0; i--){
-      leds[i] = CRGB::Red;
-      FastLED.show();
-      delay(40);
-      leds[i]= CRGB::Black;
-      leds[i+8]= CRGB::Black;
-      FastLED.show();
-      }
+      for(int towerID = 15; towerID >= 0; towerID --){
+        playStoneAnimation(random(0,15), random(0,3), false, CHSV(random8(), 255, 255));
+        }
+      for(int towerID = 0; towerID < 16; towerID ++){
+        playStoneAnimation(towerID, random(0,3), true, CHSV(random8(), 255, 255));
+        }
+        
 
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
     // For now leads into the tower select state, in which the player can select the a tower through the button matrix
     state = "select";
     }
   
-
 if(state == "select"){
  char button = customKeypad.getKey();
   if (button) {
