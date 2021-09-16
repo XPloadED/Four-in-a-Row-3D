@@ -36,6 +36,8 @@ int towerHeight[NUM_TOWER] = {};
 
 //player settings -> color of players
 CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
+// var for alternating player
+int alternate = 0;
 
 // Map the buttons to an array for the Keymap instance
 char hexaKeys[ROWS][COLS] = {
@@ -112,6 +114,7 @@ void setupGame(){
   for (int j = 0; j < NUM_TOWER * 4; j++){
     gameState[j] = -1;  //-1 -> means no player, 0 -> player 1, 1 -> player 2
   }
+  alternate = 0;
   resetAllLeds();
 }
 
@@ -140,7 +143,7 @@ int calcLedNumbersOfTowerXY(uint8_t x, uint8_t y){
 
 //-------------------------------------------------------------------------------------------------------------------
 
-// set the color of a led pair at the tower (x,y) with (0 <= x <= 3) and y(0 <= y <= 3) in the height h ((0 <= h <= 3) (from bottom) in a CHSV color 
+// set the color of a led pair at the tower (x,y) with (0 <= x <= 3) and y(0 <= y <= 3) in the height h ((0 <= h <= 3) (from bottom) in a CHSV color depending on player (0 or 1)
 void setLedPair(uint8_t x, uint8_t y, uint8_t h, int player){
     int firstLed = calcLedNumbersOfTowerXY(x,y); // first led number of the tower
 
@@ -177,6 +180,7 @@ void animateGameToken(uint8_t x, uint8_t y, uint8_t player){
 
     towerHeight[towerID] += 1;
     gameState[(towerID*4 + towerHeight[towerID] - 1)] = player; // 1d representation of game for storing the game status
+    alternate = ((alternate + 1) % 2); //for testing only -> alternate player
     
   }else{
     Serial.println("Full! no more tokens!");
@@ -234,7 +238,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();   
-            animateGameToken(0,0,0);     
+            animateGameToken(0,0,alternate);     
           break;
         case '1':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -244,7 +248,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(0,1,0);
+            animateGameToken(0,1,alternate);
           break;
         case '2':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -254,7 +258,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(0,2,0);
+            animateGameToken(0,2,alternate);
           break;
         case '3':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -264,7 +268,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(0,3,0);
+            animateGameToken(0,3,alternate);
           break;
 
 
@@ -276,7 +280,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(1,0,1);
+            animateGameToken(1,0,alternate);
           break;
         case '5':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -286,7 +290,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(1,1,1);
+            animateGameToken(1,1,alternate);
           break;
         case '6':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -296,7 +300,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(1,2,1);
+            animateGameToken(1,2,alternate);
           break;
         case '7':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -306,7 +310,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(1,3,1);
+            animateGameToken(1,3,alternate);
           break;
 
 
@@ -318,7 +322,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-            animateGameToken(2,0,0);
+            animateGameToken(2,0,alternate);
           break;
         case '9':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -328,7 +332,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-          animateGameToken(2,1,0);
+          animateGameToken(2,1,alternate);
           break;
         case 'A':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -338,7 +342,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-          animateGameToken(2,2,0);
+          animateGameToken(2,2,alternate);
           break;
         case 'B':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -348,7 +352,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-          animateGameToken(2,3,0);
+          animateGameToken(2,3,alternate);
           break;
 
 
@@ -360,7 +364,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-          animateGameToken(3,0,1);
+          animateGameToken(3,0,alternate);
           break;
         case 'D':
 //          for (int i = 0; i < NUM_LEDS; i++) {
@@ -370,7 +374,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-          animateGameToken(3,1,1);
+          animateGameToken(3,1,alternate);
           break;
 
         case 'E':
@@ -382,7 +386,7 @@ void loop() {
 //            leds[i] = CHSV(255, 255, 255);
 //          };
 //          FastLED.show();
-          animateGameToken(3,2,1);
+          animateGameToken(3,2,alternate);
           break;
         case 'F':
           for (int i = 0; i < NUM_LEDS; i++) {
