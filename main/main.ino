@@ -261,19 +261,19 @@ bool checkForWinner(uint8_t x, uint8_t y, uint8_t h, int player) {
     { -1, -1, 1}, // {1,-1,1},
     {1, 1, 1}}; //,{-1,-1,-1}};
 
-  return countToken(x, y, h, vector[0][0], vector[0][1], vector[0][2], player) + countToken(x, y, h, -vector[0][0], -vector[0][1],- vector[0][2], player) >= 4 ||
-         countToken(x, y, h, vector[1][0], vector[1][1], vector[1][2], player) + countToken(x, y, h, -vector[1][0], -vector[1][1], -vector[1][2], player) >= 4 ||
-         countToken(x, y, h, vector[2][0], vector[2][1], vector[2][2], player) + countToken(x, y, h, -vector[2][0], -vector[2][1], -vector[2][2], player) >= 4 ||
-         countToken(x, y, h, vector[3][0], vector[3][1], vector[3][2], player) + countToken(x, y, h, -vector[3][0], -vector[3][1], -vector[3][2], player) >= 4 ||
-         countToken(x, y, h, vector[4][0], vector[4][1], vector[4][2], player) + countToken(x, y, h, -vector[4][0], -vector[4][1], -vector[4][2], player) >= 4 ||
-         countToken(x, y, h, vector[5][0], vector[5][1], vector[5][2], player) + countToken(x, y, h, -vector[5][0], -vector[5][1], -vector[5][2], player) >= 4 ||
-         countToken(x, y, h, vector[6][0], vector[6][1], vector[6][2], player) + countToken(x, y, h, -vector[6][0], -vector[6][1], -vector[6][2], player) >= 4 ||
-         countToken(x, y, h, vector[7][0], vector[7][1], vector[7][2], player) + countToken(x, y, h, -vector[7][0], -vector[7][1], -vector[7][2], player) >= 4 ||
-         countToken(x, y, h, vector[8][0], vector[8][1], vector[8][2], player) + countToken(x, y, h, -vector[8][0], -vector[8][1], -vector[8][2], player) >= 4 ||
-         countToken(x, y, h, vector[9][0], vector[9][1], vector[9][2], player) + countToken(x, y, h, -vector[9][0], -vector[9][1], -vector[9][2], player) >= 4 ||
-         countToken(x, y, h, vector[10][0], vector[10][1], vector[10][2], player) + countToken(x, y, h, -vector[10][0], -vector[10][1], -vector[10][2], player) >= 4 ||
-         countToken(x, y, h, vector[11][0], vector[11][1], vector[11][2], player) + countToken(x, y, h, -vector[11][0], -vector[11][1], -vector[11][2], player) >= 4 ||
-         countToken(x, y, h, vector[12][0], vector[12][1], vector[12][2], player) + countToken(x, y, h, -vector[12][0], -vector[12][1], -vector[12][2], player) >= 4 ;
+  return countToken(x + vector[0][0], y + vector[0][1], h + vector[0][2], vector[0][0], vector[0][1], vector[0][2], player) + countToken(x - vector[0][0], y - vector[0][1], h - vector[0][2], -vector[0][0], -vector[0][1],- vector[0][2], player) >= 3 ||
+         countToken(x + vector[1][0], y + vector[1][1], h + vector[1][2], vector[1][0], vector[1][1], vector[1][2], player) + countToken(x - vector[1][0], y - vector[1][1], h - vector[1][2], -vector[1][0], -vector[1][1], -vector[1][2], player) >= 3 ||
+         countToken(x + vector[2][0], y + vector[2][1], h + vector[2][2], vector[2][0], vector[2][1], vector[2][2], player) + countToken(x - vector[2][0], y - vector[2][1], h - vector[2][2], -vector[2][0], -vector[2][1], -vector[2][2], player) >= 3 ||
+         countToken(x + vector[3][0], y + vector[3][1], h + vector[3][2], vector[3][0], vector[3][1], vector[3][2], player) + countToken(x - vector[3][0], y - vector[3][1], h - vector[3][2], -vector[3][0], -vector[3][1], -vector[3][2], player) >= 3 ||
+         countToken(x + vector[4][0], y + vector[4][1], h + vector[4][2], vector[4][0], vector[4][1], vector[4][2], player) + countToken(x - vector[4][0], y - vector[4][1], h - vector[4][2], -vector[4][0], -vector[4][1], -vector[4][2], player) >= 3 ||
+         countToken(x + vector[5][0], y + vector[5][1], h + vector[5][2], vector[5][0], vector[5][1], vector[5][2], player) + countToken(x - vector[5][0], y - vector[5][1], h - vector[5][2], -vector[5][0], -vector[5][1], -vector[5][2], player) >= 3 ||
+         countToken(x + vector[6][0], y + vector[6][1], h + vector[6][2], vector[6][0], vector[6][1], vector[6][2], player) + countToken(x - vector[6][0], y - vector[6][1], h - vector[6][2], -vector[6][0], -vector[6][1], -vector[6][2], player) >= 3 ||
+         countToken(x + vector[7][0], y + vector[7][1], h + vector[7][2], vector[7][0], vector[7][1], vector[7][2], player) + countToken(x - vector[7][0], y - vector[7][1], h - vector[7][2], -vector[7][0], -vector[7][1], -vector[7][2], player) >= 3 ||
+         countToken(x + vector[8][0], y + vector[8][1], h + vector[8][2], vector[8][0], vector[8][1], vector[8][2], player) + countToken(x - vector[8][0], y - vector[8][1], h - vector[8][2], -vector[8][0], -vector[8][1], -vector[8][2], player) >= 3 ||
+         countToken(x + vector[9][0], y + vector[9][1], h + vector[9][2], vector[9][0], vector[9][1], vector[9][2], player) + countToken(x - vector[9][0], y - vector[9][1], h - vector[9][2], -vector[9][0], -vector[9][1], -vector[9][2], player) >= 3 ||
+         countToken(x + vector[10][0], y + vector[10][1], h + vector[10][2], vector[10][0], vector[10][1], vector[10][2], player) + countToken(x - vector[10][0], y - vector[10][1], h - vector[10][2], -vector[10][0], -vector[10][1], -vector[10][2], player) >= 3 ||
+         countToken(x + vector[11][0], y + vector[11][1], h + vector[11][2], vector[11][0], vector[11][1], vector[11][2], player) + countToken(x - vector[11][0], y - vector[11][1], h - vector[11][2], -vector[11][0], -vector[11][1], -vector[11][2], player) >= 3 ||
+         countToken(x + vector[12][0], y + vector[12][1], h + vector[12][2], vector[12][0], vector[12][1], vector[12][2], player) + countToken(x - vector[12][0], y - vector[12][1], h - vector[12][2], -vector[12][0], -vector[12][1], -vector[12][2], player) >= 3 ;
 }
 
 int countToken(uint8_t x, uint8_t y, uint8_t h, int delta_x, int delta_y, int delta_h, int player) { //, int** tokenRow, int count){
