@@ -44,7 +44,8 @@ int gameState[NUM_TOWER * 4] = {};
 int towerHeight[NUM_TOWER] = {};
 
 // array for winning row
-int winningTokens[4][3] = {};
+//int winningTokens[4][3] = {};
+int winningTokens[NUM_TOWER * 4] = {};
 
 //define starting state
 String state = "select";
@@ -109,6 +110,7 @@ void setupGame() {
   }
   for (int j = 0; j < NUM_TOWER * 4; j++) {
     gameState[j] = -1;  //-1 -> means no player, 0 -> player 1, 1 -> player 2
+    winningTokens[j] = 0; // reset winningTokens array
   }
   
   alternate = 0;
@@ -129,7 +131,6 @@ void setupGame() {
 //  3   | (24-31)---(32-39)   (88-95)---(96-103)
 //
 //Calculate the number of the first led of the tower (x,y) depending on the towers x (0 <= x <= 3) and y(0 <= y <= 3) coordinate
-//
 int calcLedNumbersOfTowerXY(uint8_t x, uint8_t y) {
   if (x % 2 == 0) {             // is x even?
     return ((x * 32) + (y * 8)); // even x column
@@ -138,14 +139,20 @@ int calcLedNumbersOfTowerXY(uint8_t x, uint8_t y) {
   }
 }
 
-//-------------------------------------------------------------------------------------------------------------------
+void calcTowerXYHFromLedNum(uint8_t LedNum, uint8_t* x, uint8_t* y, uint8_t* h) {
+  *h = LedNum % 4;
+  *x = (int)((int)(LedNum/4)/4);
+  *y = ((int)(LedNum/4)%4);
 
+}
+
+//-------------------------------------------------------------------------------------------------------------------
 // set the color of a led pair at the tower (x,y) with (0 <= x <= 3) and y(0 <= y <= 3) in the height h ((0 <= h <= 3) (from bottom) in a CHSV color depending on player (0 or 1)
-void setLedPair(uint8_t x, uint8_t y, uint8_t h, int player) {
+void setLedPair(uint8_t x, uint8_t y, uint8_t h, CHSV color) {
   int firstLed = calcLedNumbersOfTowerXY(x, y); // first led number of the tower
 
-  leds[firstLed + h] = players[player]; //  set color for led at tower (x,y) and height h
-  leds[firstLed + 7 - h] = players[player]; // set color for mirrored led at tower (x,y) and height h
+  leds[firstLed + h] = color; //  set color for led at tower (x,y) and height h
+  leds[firstLed + 7 - h] = color; // set color for mirrored led at tower (x,y) and height h
   FastLED.show();
 }
 
@@ -160,29 +167,28 @@ void resetLedPair(uint8_t x, uint8_t y, uint8_t h) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------
-
 void animateGameToken(uint8_t x, uint8_t y, uint8_t player) {
   int towerID = (x * 4 + y);
   int time = 100;
 
   if (towerHeight[towerID] < 4) {
     int tokenHeight = 3; // starting height -> stone is falling down
-    setLedPair(x, y, tokenHeight, player);
+    setLedPair(x, y, tokenHeight, players[player]);
     while (tokenHeight > towerHeight[towerID]) {
       delay(time -= 20);
       resetLedPair(x, y, tokenHeight);
       tokenHeight -= 1;
-      setLedPair(x, y, tokenHeight, player);
+      setLedPair(x, y, tokenHeight, players[player]);
     }
 
     towerHeight[towerID] += 1;
     gameState[(towerID * 4 + towerHeight[towerID] - 1)] = player; // 1d representation of game for storing the game status
     alternate = ((alternate + 1) % 2); //for testing only -> alternate player
 
-    
     if (checkForWinner(x, y, (towerHeight[towerID] - 1), player)  ) { // check if there is already a winner of the game
       state = "winner"; //if there is a winner change the state to winner
     }
+    
   } else {
     Serial.println("Full! no more tokens!");
   }
@@ -247,60 +253,60 @@ void resetAllLeds() {
 // check for a winner
 bool checkForWinner(uint8_t x, uint8_t y, uint8_t h, int player) {
   //all possible neighbor fields as vector
-  int vector[13][3] = {{1, 0, 0}, //{-1,0,0},
-    {0, 1, 0}, //{0,-1,0},
-    {0, 0, 1}, //{0,0,-1},
-    {1, 1, 0}, //{-1,-1,0},
-    {1, 0, 1}, //{-1,0,-1},
-    {0, 1, 1}, //{0,-1,-1},
-    {1, -1, 0}, // {-1,1,0},
-    {1, 0, -1}, // {-1,0,1},
-    {0, 1, -1}, // {0,-1,1},
-    {1, 1, -1}, // {-1,1,-1},
-    {1, -1, -1}, // {-1,1,1},
-    { -1, -1, 1}, // {1,-1,1},
-    {1, 1, 1}}; //,{-1,-1,-1}};
+  int vector[13][3] =   {{1, 0, 0}, //{-1,0,0},
+                        {0, 1, 0}, //{0,-1,0},
+                        {0, 0, 1}, //{0,0,-1},
+                        {1, 1, 0}, //{-1,-1,0},
+                        {1, 0, 1}, //{-1,0,-1},
+                        {0, 1, 1}, //{0,-1,-1},
+                        {1, -1, 0}, // {-1,1,0},
+                        {1, 0, -1}, // {-1,0,1},
+                        {0, 1, -1}, // {0,-1,1},
+                        {1, 1, -1}, // {-1,1,-1},
+                        {1, -1, -1}, // {-1,1,1},
+                        {1, -1, 1}, // {1,-1,1},
+                        {1, 1, 1}}; //,{-1,-1,-1}};
+  
+  bool winnerFound = false;
+  int i = 0;
+  while(!winnerFound && i < 13){
+    int direction = countToken(x + vector[i][0], y + vector[i][1], h + vector[i][2], vector[i][0], vector[i][1], vector[i][2], player) + countToken(x - vector[i][0], y - vector[i][1], h - vector[i][2], -vector[i][0], -vector[i][1],- vector[i][2], player);
 
-  return countToken(x + vector[0][0], y + vector[0][1], h + vector[0][2], vector[0][0], vector[0][1], vector[0][2], player) + countToken(x - vector[0][0], y - vector[0][1], h - vector[0][2], -vector[0][0], -vector[0][1],- vector[0][2], player) >= 3 ||
-         countToken(x + vector[1][0], y + vector[1][1], h + vector[1][2], vector[1][0], vector[1][1], vector[1][2], player) + countToken(x - vector[1][0], y - vector[1][1], h - vector[1][2], -vector[1][0], -vector[1][1], -vector[1][2], player) >= 3 ||
-         countToken(x + vector[2][0], y + vector[2][1], h + vector[2][2], vector[2][0], vector[2][1], vector[2][2], player) + countToken(x - vector[2][0], y - vector[2][1], h - vector[2][2], -vector[2][0], -vector[2][1], -vector[2][2], player) >= 3 ||
-         countToken(x + vector[3][0], y + vector[3][1], h + vector[3][2], vector[3][0], vector[3][1], vector[3][2], player) + countToken(x - vector[3][0], y - vector[3][1], h - vector[3][2], -vector[3][0], -vector[3][1], -vector[3][2], player) >= 3 ||
-         countToken(x + vector[4][0], y + vector[4][1], h + vector[4][2], vector[4][0], vector[4][1], vector[4][2], player) + countToken(x - vector[4][0], y - vector[4][1], h - vector[4][2], -vector[4][0], -vector[4][1], -vector[4][2], player) >= 3 ||
-         countToken(x + vector[5][0], y + vector[5][1], h + vector[5][2], vector[5][0], vector[5][1], vector[5][2], player) + countToken(x - vector[5][0], y - vector[5][1], h - vector[5][2], -vector[5][0], -vector[5][1], -vector[5][2], player) >= 3 ||
-         countToken(x + vector[6][0], y + vector[6][1], h + vector[6][2], vector[6][0], vector[6][1], vector[6][2], player) + countToken(x - vector[6][0], y - vector[6][1], h - vector[6][2], -vector[6][0], -vector[6][1], -vector[6][2], player) >= 3 ||
-         countToken(x + vector[7][0], y + vector[7][1], h + vector[7][2], vector[7][0], vector[7][1], vector[7][2], player) + countToken(x - vector[7][0], y - vector[7][1], h - vector[7][2], -vector[7][0], -vector[7][1], -vector[7][2], player) >= 3 ||
-         countToken(x + vector[8][0], y + vector[8][1], h + vector[8][2], vector[8][0], vector[8][1], vector[8][2], player) + countToken(x - vector[8][0], y - vector[8][1], h - vector[8][2], -vector[8][0], -vector[8][1], -vector[8][2], player) >= 3 ||
-         countToken(x + vector[9][0], y + vector[9][1], h + vector[9][2], vector[9][0], vector[9][1], vector[9][2], player) + countToken(x - vector[9][0], y - vector[9][1], h - vector[9][2], -vector[9][0], -vector[9][1], -vector[9][2], player) >= 3 ||
-         countToken(x + vector[10][0], y + vector[10][1], h + vector[10][2], vector[10][0], vector[10][1], vector[10][2], player) + countToken(x - vector[10][0], y - vector[10][1], h - vector[10][2], -vector[10][0], -vector[10][1], -vector[10][2], player) >= 3 ||
-         countToken(x + vector[11][0], y + vector[11][1], h + vector[11][2], vector[11][0], vector[11][1], vector[11][2], player) + countToken(x - vector[11][0], y - vector[11][1], h - vector[11][2], -vector[11][0], -vector[11][1], -vector[11][2], player) >= 3 ||
-         countToken(x + vector[12][0], y + vector[12][1], h + vector[12][2], vector[12][0], vector[12][1], vector[12][2], player) + countToken(x - vector[12][0], y - vector[12][1], h - vector[12][2], -vector[12][0], -vector[12][1], -vector[12][2], player) >= 3 ;
+    if (direction >= 3){
+      int fieldNum = ((x * 4 + y) * 4 + h);
+      winningTokens[fieldNum] = 1;
+      winnerFound = true;
+    }else{
+      i++;
+    }
+  }
+
+  if (winnerFound){
+      Serial.println("<WinningToken---------------------------------------------------");
+      for (int i = 0; i < NUM_TOWER*4; i++) {
+        Serial.println(winningTokens[i]);
+      }
+      Serial.println("</WinningToken---------------------------------------------------");
+    return true;
+  }else{
+    return false;
+  }
 }
 
 int countToken(uint8_t x, uint8_t y, uint8_t h, int delta_x, int delta_y, int delta_h, int player) { //, int** tokenRow, int count){
   if ((x >= 0 && x < 4) && (y >= 0 && y < 4) && (h >= 0 && h < 4)) { //if token is in the bounderies of the game
-    int newField = ((x * 4 + y) * 4 + h);
-    if (gameState[newField] == player) {
-      Serial.print("x: ");
-      Serial.println(x);
-      Serial.print("y: ");
-      Serial.println(y);
-      Serial.print("h: ");
-      Serial.println(h);
-      Serial.println("");
+    int fieldNum = ((x * 4 + y) * 4 + h);
+    if (gameState[fieldNum] == player) {
+      winningTokens[fieldNum] = 1;
       return countToken(x + delta_x, y + delta_y, h + delta_h, delta_x, delta_y, delta_h, player) + 1;
     } else {
-      return 0; // newField and player are not identical
+      for (int j = 0; j < NUM_TOWER * 4; j++) {
+        winningTokens[j] = 0;       // reset winningTokens array
+      }
+      return 0; // gameState[newField] and player are not identical
     }
   } else {
-    Serial.println("Search out of boundary! no more tokens!");
-    Serial.print("x: ");
-    Serial.println(x);
-    Serial.print("y: ");
-    Serial.println(y);
-    Serial.print("h: ");
-    Serial.println(h);
-    Serial.println("");
-    return 0;
+    return 0; // return 0 if token is out of bounderies
   }
 }
 
@@ -323,23 +329,17 @@ void loop() {
 
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
     // For now leads into the tower select state, in which the player can select a tower through the button matrix
+    resetAllLeds();
     state = "select";
   }
 
   if (state == "select") {
-
+    
     //Button matrix
     char button = customKeypad.getKey();
-    if (button) {
+    if (button) {      
       switch (button) {
         case '0':
-          //          for (int i = 0; i < NUM_LEDS; i++) {
-          //            leds[i] = CRGB::Black;
-          //          }
-          //          for (int i = 0; i < 8; i++) {
-          //            leds[i] = CHSV(255, 255, 255);
-          //          };
-          //          FastLED.show();
           animateGameToken(0, 0, alternate);
           break;
         case '1':
@@ -392,32 +392,41 @@ void loop() {
           break;
       }
     }
-  // read the state of the switch/button:
+
+  // read the state of the switch/button: -> reset button
   currentStateCB1 = digitalRead(CASE_BUTTON_1);
-
   if(lastStateCB1 == LOW && currentStateCB1 == HIGH){
-    Serial.println("The state changed from LOW to HIGH");
-    Serial.println("---------------------------------------------------------");
-    for (int i = 0; i < NUM_TOWER; i++) {
-      Serial.println(towerHeight[i]);
-    }
-    Serial.println("---------------------------------------------------------");
-
-    for (int i = 0; i < NUM_TOWER * 4; i++) {
-      Serial.println(gameState[i]);
-    }
-    setupGame();
+    setupGame(); //reset game button
   }
-
   // save the the last state
   lastStateCB1 = currentStateCB1;
-    
+
   }
 
   //TODO: Update winning state
 
   if (state == "winner") {
     resetAllLeds();
+    for(int i = 0; i < 64; i++){
+      uint8_t x, y, h = 0;
+      if (winningTokens[i] == 1){
+        calcTowerXYHFromLedNum(i, &x, &y, &h);
+        setLedPair(x, y, h, players[gameState[i]]);
+      }
+    }
+    
+    delay(500);
+    resetAllLeds();
+    delay(500);
+    for(int i = 0; i < 64; i++){
+      uint8_t x, y, h = 0;
+      if (winningTokens[i] == 1){
+        calcTowerXYHFromLedNum(i, &x, &y, &h);
+        setLedPair(x, y, h, players[gameState[i]]);
+      }
+    }
+
+    delay(1000);
     setupGame();
     state = "select";
   }
