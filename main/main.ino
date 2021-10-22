@@ -44,6 +44,20 @@ unsigned long timerDelay = 5000;
 
 
 //----------------------------------------------------------------------------------------
+//State configuration
+
+bool activeGame = false;
+int gameID = 0;
+
+int moveCounter = 0;
+
+
+//define starting state
+String lastState = "setupGameState";
+String newState = "setupGameState";
+
+
+//----------------------------------------------------------------------------------------
 //Game settings
 //game status
 // Layout of the gamestate array with 64 places: 1d representation of 3d playground
@@ -64,15 +78,14 @@ unsigned long timerDelay = 5000;
 int gameState[NUM_TOWER * 4] = {};
 int towerHeight[NUM_TOWER] = {};
 
+bool placedToken = false;
+
 int lastToken[3] = {};
-int moveCounter = 0;
+int playerLastToken = -1;
 
 // array for winning row
 //int winningTokens[4][3] = {};
 int winningTokens[NUM_TOWER * 4] = {};
-
-//define starting state
-String state = "setupGameState";
 
 //----------------------------------------------------------------------------------------
 //player settings
@@ -81,7 +94,7 @@ CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
 // var for alternating player
 
 const int myPlayer = 0; // change for second player
-int playerToken = -1;
+int nextPlayer = -1;
 
 
 
@@ -153,7 +166,7 @@ void setupGame() {
     winningTokens[j] = 0; // reset winningTokens array
   }
 
-  playerToken = 0;
+  nextPlayer = 0;
   moveCounter = 0;
   resetAllLeds();
 }
@@ -262,7 +275,7 @@ String sendHttpGet(String url) {
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
       payload = http.getString();
-      //Serial.println(payload);
+      Serial.println(payload);
     }
     else {
       Serial.print("Error code: ");
@@ -340,8 +353,11 @@ void animateGameToken(uint8_t x, uint8_t y, uint8_t player) {
 
     towerHeight[towerID] += 1;
     gameState[(towerID * 4 + towerHeight[towerID] - 1)] = player; // 1d representation of game for storing the game status
-
+    
+    Serial.println("Set token: x " + String(x) + ",y  " + String(y) +",P " + String(player));
     setLastToken(x, y, towerHeight[towerID]);
+    playerLastToken = player;
+    placedToken = true;
 
   } else {
     Serial.println("Full! no more tokens!");
@@ -349,10 +365,11 @@ void animateGameToken(uint8_t x, uint8_t y, uint8_t player) {
 }
 
 void removeGameToken(uint8_t x, uint8_t y, uint8_t player) {
+  Serial.println("Remove token: x " + String(x) + ",y  " + String(y) +",P " + String(player));
   int towerID = calcTowerID(x, y); //towerID for towerHeight array required
 
   if (gameState[(towerID * 4 + towerHeight[towerID] - 1)] == player) {
-    resetLedPair(x, y, towerHeight[towerID]); // reset LED
+    resetLedPair(x, y, towerHeight[towerID] - 1); // reset LED
     towerHeight[towerID] -= 1; // reduce height of tower with towerID
     gameState[(towerID * 4 + towerHeight[towerID] - 1)] = -1;
   } else {
@@ -478,8 +495,9 @@ int countToken(uint8_t x, uint8_t y, uint8_t h, int delta_x, int delta_y, int de
 
 void loop() {
   //StartUp routine
-  if (state == "startup") {
-
+  if (newState == "startup") {
+    Serial.println("State: startup");
+    
     for (int towerID = 0; towerID < 16; towerID ++) {
       playStoneAnimation(towerID, random(0, 3), true, CHSV(random8(), 255, 255));
     }
@@ -493,16 +511,17 @@ void loop() {
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
     // For now leads into the tower select state, in which the player can select a tower through the button matrix
     resetAllLeds();
-    state = "setupGameState";
+    newState = "setupGameState";
   }
 
-  if (state == "setupGameState") {
+  if (newState == "setupGameState") {
+    Serial.println("State: setupGameState");
     setupGame();
 
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      state = "syncState";
+      newState = "syncState";
     }
     // save the the last state
     lastStateCB1 = currentStateCB1;
@@ -516,61 +535,110 @@ void loop() {
     lastStateCB3 = currentStateCB3;
   }
 
-  if (state == "pickTowerState") {
+  if (newState == "pickTowerState") {
+    Serial.println("State: pickTowerState");
     //Button matrix
     char button = customKeypad.getKey();
     if (button) {
       switch (button) {
         case '0':
-          animateGameToken(0, 0, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(0, 0, myPlayer);
           break;
         case '1':
-          animateGameToken(0, 1, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(0, 1, myPlayer);
           break;
         case '2':
-          animateGameToken(0, 2, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(0, 2, myPlayer);
           break;
         case '3':
-          animateGameToken(0, 3, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(0, 3, myPlayer);
           break;
 
         case '4':
-          animateGameToken(1, 0, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(1, 0, myPlayer);
           break;
         case '5':
-          animateGameToken(1, 1, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(1, 1, myPlayer);
           break;
         case '6':
-          animateGameToken(1, 2, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(1, 2, myPlayer);
           break;
         case '7':
-          animateGameToken(1, 3, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(1, 3, myPlayer);
           break;
 
         case '8':
-          animateGameToken(2, 0, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(2, 0, myPlayer);
           break;
         case '9':
-          animateGameToken(2, 1, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(2, 1, myPlayer);
           break;
         case 'A':
-          animateGameToken(2, 2, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(2, 2, myPlayer);
           break;
         case 'B':
-          animateGameToken(2, 3, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(2, 3, myPlayer);
           break;
 
         case 'C':
-          animateGameToken(3, 0, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(3, 0, myPlayer);
           break;
         case 'D':
-          animateGameToken(3, 1, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(3, 1, myPlayer);
           break;
         case 'E':
-          animateGameToken(3, 2, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(3, 2, myPlayer);
           break;
         case 'F':
-          animateGameToken(3, 3, playerToken);
+          if(placedToken){
+            removeGameToken(lastToken[0],lastToken[1],myPlayer);
+          }
+          animateGameToken(3, 3, myPlayer);
           break;
       }
     }
@@ -578,7 +646,10 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      state = "check4WinState";
+      placedToken = false;
+      moveCounter += 1;
+      nextPlayer = ((myPlayer + 1) % 2);
+      newState = "check4WinState";
     }
     // save the the last state
     lastStateCB1 = currentStateCB1;
@@ -586,36 +657,91 @@ void loop() {
     // read the state of the switch/button: -> reset button
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
-      state = "setupGameState"; //reset game button
+
     }
     // save the the last state
     lastStateCB3 = currentStateCB3;
 
   }
 
-  if (state == "syncState") {
-    Serial.println("moveCounter: " + String(moveCounter));
-   setNetVar("4row_test",String(moveCounter));
-   Serial.println(getNetVar("4row_test"));
-   moveCounter +=  1;
-   
+  if (newState == "syncState") {
+    Serial.println("State: syncState");
+    if (!activeGame){ // start new game -> no game active
+
+      //get and set gameID
+      gameID = getNetVar("4row_gameID").toInt(); // get last gameID from server
+      setNetVar("4row_gameID", String(gameID + 1)); // set new gameID
+
+      //Set moveCounter to 0 and send to server
+      moveCounter = 0;
+      setNetVar("4row_moveCount", String(moveCounter));
+
+      //Set playerToken -> change player
+      nextPlayer = myPlayer; // Player selection
+      setNetVar("4row_nextPlayer", String(nextPlayer));
+
+      //reset lastToken
+      setNetVar("4row_lastToken_x", String(-1));
+      setNetVar("4row_lastToken_y", String(-1));
+      setNetVar("4row_lastToken_h", String(-1));
+
+      //Set active game to true and send to server
+      activeGame = true;
+      setNetVar("4row_activeGame", String(activeGame));
+
+      newState = "pickTowerState";
+      
+    }
+
+    if (activeGame){
+      if (nextPlayer == myPlayer){
+        int lastTokenX = getNetVar("4row_lastToken_x").toInt();
+        int lastTokenY = getNetVar("4row_lastToken_y").toInt();
+        int lastTokenH = getNetVar("4row_lastToken_h").toInt();
+        int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
+
+        animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
+     
+      }
+
+      if (nextPlayer == ((myPlayer + 1) % 2)){
+        setNetVar("4row_lastToken_x", String(lastToken[0]));
+        setNetVar("4row_lastToken_y", String(lastToken[1]));
+        setNetVar("4row_lastToken_h", String(lastToken[2]));
+        setNetVar("4row_player_lastToke", String(myPlayer));
+
+        setNetVar("4row_moveCount", String(moveCounter));
+
+        setNetVar("4row_nextPlayer", String(nextPlayer));
+      }
+      if (getNetVar("4row_moveCount").toInt() == moveCounter + 1){
+        newState = "check4WinState";
+      }
+      
+    }
     
   }
 
 
-  if (state == "check4WinState") {
-    int x = lastToken[0];
-    int y = lastToken[1];
-
-    if (checkForWinner(x, y, (towerHeight[calcTowerID(x, y)] - 1), playerToken)  ) { // check if there is already a winner of the game
-      state = "winnerState"; //if there is a winner change the state to winner
+  if (newState == "check4WinState") {
+    Serial.println("State: check4WinState");
+    
+    if (checkForWinner(lastToken[0], lastToken[1], lastToken[2], playerLastToken)  ) { // check if there is already a winner of the game
+      newState = "winnerState"; //if there is a winner change the state to winner
     }else{
-      state = "pickTowerState";
+      if (nextPlayer == myPlayer){
+        newState = "pickTowerState";
+      }
+      if (nextPlayer == ((myPlayer + 1) % 2)){
+        newState = "syncState";
+      }
+      
     }
 
   }
 
-  if (state == "winnerState") {
+  if (newState == "winnerState") {
+    Serial.println("State: winnerState");
     resetAllLeds();
     for (int i = 0; i < 64; i++) {
       uint8_t x, y, h = 0;
