@@ -88,6 +88,7 @@ int playerLastToken = -1;
 
 // array for winning row
 //int winningTokens[4][3] = {};
+bool winner = false;
 int winningTokens[NUM_TOWER * 4] = {};
 
 //----------------------------------------------------------------------------------------
@@ -724,66 +725,70 @@ void loop() {
         int lastTokenY = getNetVar("4row_lastToken_y").toInt();
         int lastTokenH = getNetVar("4row_lastToken_h").toInt();
         int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
-        
+
         if ((lastTokenX >= 0 && lastTokenX < 4) && (lastTokenY >= 0 && lastTokenY < 4) && (lastTokenH >= 0 && lastTokenH < 4) && (getNetVar("4row_moveCount").toInt() != moveCounter)) {
           Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: Animation gegnerischer Spieler");
           animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
-          newState = "check4WinState";
+          if (winner) {
+            newState = "winnerState";
+          } else {
+            newState = "check4WinState";
+          }
+
+          moveCounter = getNetVar("4row_moveCount").toInt();
         }
-       
-        moveCounter = getNetVar("4row_moveCount").toInt();
+
+        currentStateCB2 = digitalRead(CASE_BUTTON_2);
+        if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
+          setNetVar("4row_nextPlayer", String(myPlayer));
+        }
+        // save the the last state
+        lastStateCB1 = currentStateCB1;
       }
 
-     currentStateCB2 = digitalRead(CASE_BUTTON_2);
-    if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
-      setNetVar("4row_nextPlayer", String(myPlayer));
+      if (nextPlayer == ((myPlayer + 1) % 2)) {
+        Serial.println("SyncState: Entscheidung nächster Spieler: lokaler / *entfernter*: " + String(nextPlayer));
+        setNetVar("4row_lastToken_x", String(lastToken[0]));
+        setNetVar("4row_lastToken_y", String(lastToken[1]));
+        setNetVar("4row_lastToken_h", String(lastToken[2]));
+        setNetVar("4row_player_lastToken", String(myPlayer));
+
+        Serial.println("moveCounter  vor Zug: " + String(moveCounter));
+        moveCounter += 1;
+        Serial.println("moveCounter nach Zug: " + String(moveCounter));
+        setNetVar("4row_moveCount", String(moveCounter));
+
+        setNetVar("4row_nextPlayer", String(nextPlayer));
+
+        nextPlayer = myPlayer;
+      }
+
+      //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
+      //      newState = "check4WinState";
+      //    }
     }
-    // save the the last state
-    lastStateCB1 = currentStateCB1;
-    }
-
-    if (nextPlayer == ((myPlayer + 1) % 2)) {
-      Serial.println("SyncState: Entscheidung nächster Spieler: lokaler / *entfernter*: " + String(nextPlayer));
-      setNetVar("4row_lastToken_x", String(lastToken[0]));
-      setNetVar("4row_lastToken_y", String(lastToken[1]));
-      setNetVar("4row_lastToken_h", String(lastToken[2]));
-      setNetVar("4row_player_lastToken", String(myPlayer));
-
-      Serial.println("moveCounter  vor Zug: " + String(moveCounter));
-      moveCounter += 1;
-      Serial.println("moveCounter nach Zug: " + String(moveCounter));
-      setNetVar("4row_moveCount", String(moveCounter));
-
-      setNetVar("4row_nextPlayer", String(nextPlayer));
-
-      nextPlayer = myPlayer;
-    }
-
-    //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
-    //      newState = "check4WinState";
-    //    }
   }
 
 
   if (newState == "check4WinState") {
     //Serial.println("State: check4WinState");
     uint8_t lastTokenXn, lastTokenYn, lastTokenHn = -1;
-    
+
     getLastToken(&lastTokenXn, &lastTokenYn, &lastTokenHn);
 
     Serial.println("LastToken: " + String(lastTokenXn) + ", " + String(lastTokenYn) + ", " + String(lastTokenHn));
 
     if (checkForWinner(lastTokenXn, lastTokenYn, lastTokenHn - 1, playerLastToken)  ) { // check if there is already a winner of the game
-      newState = "winnerState"; //if there is a winner change the state to winner
-    } else {
-      if (nextPlayer == myPlayer) {
-        newState = "pickTowerState";
-      }
-      if (nextPlayer == ((myPlayer + 1) % 2)) {
-        newState = "syncState";
-      }
-
+      winner = true; //if there is a winner change the state to winner
     }
+    if (nextPlayer == myPlayer) {
+      newState = "pickTowerState";
+    }
+    if (nextPlayer == ((myPlayer + 1) % 2)) {
+      newState = "syncState";
+    }
+
+
 
   }
 
@@ -801,7 +806,7 @@ void loop() {
     delay(5000);
     resetAllLeds();
 
-        // read the state of the switch/button: -> start new game
+    // read the state of the switch/button: -> start new game
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
       newState = "setupGameState";
