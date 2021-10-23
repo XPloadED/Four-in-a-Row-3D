@@ -93,7 +93,7 @@ int winningTokens[NUM_TOWER * 4] = {};
 CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
 // var for alternating player
 
-const int myPlayer = 0; // change for second player
+const int myPlayer = 1; // change for second player
 int nextPlayer = -1;
 
 
@@ -521,7 +521,7 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      Serial.println("State: setupGameState -> Button 1 gedrückt!")
+      Serial.println("State: setupGameState -> Button 1 gedrückt!");
       if (getNetVar("4row_moveCount") != 0) {
 
         //Set moveCounter to 0 and send to server
@@ -552,7 +552,7 @@ void loop() {
     // read the state of the switch/button:
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
-      Serial.println("State: setupGameState -> Button 3 gedrückt!")
+      Serial.println("State: setupGameState -> Button 3 gedrückt!");
 
     }
     // save the the last state
