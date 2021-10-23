@@ -356,19 +356,23 @@ void animateGameToken(uint8_t x, uint8_t y, uint8_t player) {
     playerLastToken = player;
     placedToken = true;
 
+    Serial.println("GameState after Token: " + convertArrayToString(gameState, 64));
+    Serial.println("TokenHeight after Token: " + convertArrayToString(towerHeight, 16));
   } else {
     Serial.println("Full! no more tokens!");
   }
 }
 
 void removeGameToken(uint8_t x, uint8_t y, uint8_t player) {
+  Serial.println(convertArrayToString(towerHeight, 16));
   Serial.println("Remove token: x " + String(x) + ",y  " + String(y) + ",P " + String(player));
   int towerID = calcTowerID(x, y); //towerID for towerHeight array required
 
   if (gameState[(towerID * 4 + towerHeight[towerID] - 1)] == player) {
     resetLedPair(x, y, towerHeight[towerID] - 1); // reset LED
-    towerHeight[towerID] -= 1; // reduce height of tower with towerID
     gameState[(towerID * 4 + towerHeight[towerID] - 1)] = -1;
+    towerHeight[towerID] -= 1; // reduce height of tower with towerID
+    
   } else {
     Serial.println("Can't remove token! Wrong color!");
   }
