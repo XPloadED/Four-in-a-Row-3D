@@ -268,6 +268,7 @@ String sendHttpGet(String url) {
 
     HTTPClient http;
 
+    Serial.println("URL: " + url);
     String serverPath = serverName + url;
     //String serverPath = serverName + "?varName=4row_test";
 
