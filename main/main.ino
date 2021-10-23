@@ -532,7 +532,7 @@ void loop() {
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
       Serial.println("State: setupGameState -> Button 1 gedrückt!");
-      if (getNetVar("4row_moveCount") != 0) {
+      if (getNetVar("4row_moveCount").toInt() != 0) {
 
         //Set moveCounter to 0 and send to server
         moveCounter = 0;
