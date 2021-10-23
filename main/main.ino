@@ -745,29 +745,30 @@ void loop() {
         // save the the last state
         lastStateCB1 = currentStateCB1;
       }
-
-      if (nextPlayer == ((myPlayer + 1) % 2)) {
-        Serial.println("SyncState: Entscheidung nächster Spieler: lokaler / *entfernter*: " + String(nextPlayer));
-        setNetVar("4row_lastToken_x", String(lastToken[0]));
-        setNetVar("4row_lastToken_y", String(lastToken[1]));
-        setNetVar("4row_lastToken_h", String(lastToken[2]));
-        setNetVar("4row_player_lastToken", String(myPlayer));
-
-        Serial.println("moveCounter  vor Zug: " + String(moveCounter));
-        moveCounter += 1;
-        Serial.println("moveCounter nach Zug: " + String(moveCounter));
-        setNetVar("4row_moveCount", String(moveCounter));
-
-        setNetVar("4row_nextPlayer", String(nextPlayer));
-
-        nextPlayer = myPlayer;
-      }
-
-      //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
-      //      newState = "check4WinState";
-      //    }
     }
+
+    if (nextPlayer == ((myPlayer + 1) % 2)) {
+      Serial.println("SyncState: Entscheidung nächster Spieler: lokaler / *entfernter*: " + String(nextPlayer));
+      setNetVar("4row_lastToken_x", String(lastToken[0]));
+      setNetVar("4row_lastToken_y", String(lastToken[1]));
+      setNetVar("4row_lastToken_h", String(lastToken[2]));
+      setNetVar("4row_player_lastToken", String(myPlayer));
+
+      Serial.println("moveCounter  vor Zug: " + String(moveCounter));
+      moveCounter += 1;
+      Serial.println("moveCounter nach Zug: " + String(moveCounter));
+      setNetVar("4row_moveCount", String(moveCounter));
+
+      setNetVar("4row_nextPlayer", String(nextPlayer));
+
+      nextPlayer = myPlayer;
+    }
+
+    //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
+    //      newState = "check4WinState";
+    //    }
   }
+
 
 
   if (newState == "check4WinState") {
