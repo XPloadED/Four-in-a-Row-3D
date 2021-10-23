@@ -773,7 +773,7 @@ void loop() {
 
     Serial.println("LastToken: " + String(lastTokenXn) + ", " + String(lastTokenYn) + ", " + String(lastTokenHn));
 
-    if (checkForWinner(lastTokenXn, lastTokenYn, lastTokenHn, playerLastToken)  ) { // check if there is already a winner of the game
+    if (checkForWinner(lastTokenXn, lastTokenYn, lastTokenHn - 1, playerLastToken)  ) { // check if there is already a winner of the game
       newState = "winnerState"; //if there is a winner change the state to winner
     } else {
       if (nextPlayer == myPlayer) {
