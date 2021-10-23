@@ -690,11 +690,10 @@ void loop() {
   }
 
   if (newState == "syncState") {
-
-    nextPlayer = getNetVar("4row_nextPlayer").toInt();
+    Serial.println("SyncState: nextPlayer -> " + String(nextPlayer));
 
     if (nextPlayer == myPlayer) {
-      Serial.println("State: syncState -> Player: " + String(myPlayer));
+      Serial.println("State: syncState -> Player: " + String(nextPlayer));
       int lastTokenX = getNetVar("4row_lastToken_x").toInt();
       int lastTokenY = getNetVar("4row_lastToken_y").toInt();
       int lastTokenH = getNetVar("4row_lastToken_h").toInt();
@@ -705,7 +704,7 @@ void loop() {
     }
 
     if (nextPlayer == ((myPlayer + 1) % 2)) {
-      Serial.println("State: syncState -> Player: " + String((myPlayer + 1) % 2));
+      Serial.println("State: syncState -> Player: " + String(nextPlayer));
       setNetVar("4row_lastToken_x", String(lastToken[0]));
       setNetVar("4row_lastToken_y", String(lastToken[1]));
       setNetVar("4row_lastToken_h", String(lastToken[2]));
@@ -719,7 +718,7 @@ void loop() {
     if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
       newState = "check4WinState";
     }
-
+    nextPlayer = getNetVar("4row_nextPlayer").toInt();
     delay(5000);
 
   }
