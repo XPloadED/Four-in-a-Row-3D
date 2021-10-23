@@ -260,6 +260,7 @@ String sendHttpGet(String url) {
     HTTPClient http;
 
     String serverPath = serverName + url;
+    Serial.println("URL: " + url);
     //String serverPath = serverName + "?varName=4row_test";
 
     // Your Domain name with URL path or IP address with path
