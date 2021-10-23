@@ -552,8 +552,9 @@ void loop() {
         newState = "pickTowerState";
       } else {
         moveCounter = getNetVar("4row_moveCount").toInt();
-        nextPlayer = getNetVar("4row_nextPlayer").toInt();
-
+        //nextPlayer = getNetVar("4row_nextPlayer").toInt();
+        nextPlayer = myPlayer;
+      
         newState = "syncState";
 
       }
@@ -699,6 +700,7 @@ void loop() {
       placedToken = false;
       moveCounter += 1;
       nextPlayer = ((myPlayer + 1) % 2);
+      Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer)); 
       newState = "check4WinState";
     }
     // save the the last state
@@ -715,7 +717,6 @@ void loop() {
   }
 
   if (newState == "syncState") {
-    Serial.println("SyncState:");
     Serial.println("SyncState: lokaler NextPlayer: " + String(nextPlayer));
     if (nextPlayer == myPlayer) {
       if (getNetVar("4row_nextPlayer").toInt() == myPlayer) {
