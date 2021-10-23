@@ -146,11 +146,12 @@ void setup() {
   //fix flashing LEDs on startup after powerloss
   FastLED.clear();
   FastLED.show();
-  
+
   setupGame();
 
 
   //Setup WiFi
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
   while (WiFi.status() != WL_CONNECTED) {
@@ -382,7 +383,7 @@ void removeGameToken(uint8_t x, uint8_t y, uint8_t player) {
     resetLedPair(x, y, towerHeight[towerID] - 1); // reset LED
     gameState[(towerID * 4 + towerHeight[towerID] - 1)] = -1;
     towerHeight[towerID] -= 1; // reduce height of tower with towerID
-    
+
   } else {
     Serial.println("Can't remove token! Wrong color!");
   }
@@ -708,8 +709,9 @@ void loop() {
       int lastTokenH = getNetVar("4row_lastToken_h").toInt();
       int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
 
-      animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
-
+      if (lastTokenX != -1 && lastTokenY != -1 && lastTokenH != -1) {
+        animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
+      }
     }
 
     if (nextPlayer == ((myPlayer + 1) % 2)) {
