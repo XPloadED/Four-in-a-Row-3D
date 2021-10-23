@@ -724,7 +724,7 @@ void loop() {
         int lastTokenY = getNetVar("4row_lastToken_y").toInt();
         int lastTokenH = getNetVar("4row_lastToken_h").toInt();
         int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
-
+        
         if ((lastTokenX >= 0 && lastTokenX < 4) && (lastTokenY >= 0 && lastTokenY < 4) && (lastTokenH >= 0 && lastTokenH < 4) && (getNetVar("4row_moveCount").toInt() != moveCounter)) {
           Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: Animation gegnerischer Spieler");
           animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
@@ -767,8 +767,13 @@ void loop() {
 
   if (newState == "check4WinState") {
     //Serial.println("State: check4WinState");
+    uint8_t lastTokenXn, lastTokenYn, lastTokenHn = -1;
+    
+    getLastToken(&lastTokenXn, &lastTokenYn, &lastTokenHn);
 
-    if (checkForWinner(lastToken[0], lastToken[1], lastToken[2], playerLastToken)  ) { // check if there is already a winner of the game
+    Serial.println("LastToken: " + String(lastTokenXn) + ", " + String(lastTokenYn) + ", " + String(lastTokenHn));
+
+    if (checkForWinner(lastTokenXn, lastTokenYn, lastTokenHn, playerLastToken)  ) { // check if there is already a winner of the game
       newState = "winnerState"; //if there is a winner change the state to winner
     } else {
       if (nextPlayer == myPlayer) {
