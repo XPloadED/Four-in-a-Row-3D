@@ -516,12 +516,12 @@ void loop() {
   }
 
   if (newState == "setupGameState") {
-    //Serial.println("State: setupGameState");
     setupGame();
 
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
+      Serial.println("State: setupGameState -> Button 1 gedrückt!")
       if (getNetVar("4row_moveCount") != 0) {
 
         //Set moveCounter to 0 and send to server
@@ -552,6 +552,7 @@ void loop() {
     // read the state of the switch/button:
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
+      Serial.println("State: setupGameState -> Button 3 gedrückt!")
 
     }
     // save the the last state
@@ -690,6 +691,7 @@ void loop() {
   if (newState == "syncState") {
 
     if (nextPlayer == myPlayer) {
+      Serial.println("State: syncState -> Player: " + String(myPlayer));
       int lastTokenX = getNetVar("4row_lastToken_x").toInt();
       int lastTokenY = getNetVar("4row_lastToken_y").toInt();
       int lastTokenH = getNetVar("4row_lastToken_h").toInt();
@@ -700,6 +702,7 @@ void loop() {
     }
 
     if (nextPlayer == ((myPlayer + 1) % 2)) {
+      Serial.println("State: syncState -> Player: " + String((myPlayer + 1) % 2));
       setNetVar("4row_lastToken_x", String(lastToken[0]));
       setNetVar("4row_lastToken_y", String(lastToken[1]));
       setNetVar("4row_lastToken_h", String(lastToken[2]));
@@ -713,6 +716,8 @@ void loop() {
     if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
       newState = "check4WinState";
     }
+
+    delay(5000);
 
   }
 
