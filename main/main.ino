@@ -698,7 +698,6 @@ void loop() {
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
       placedToken = false;
-      moveCounter += 1;
       nextPlayer = ((myPlayer + 1) % 2);
       Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer));
       newState = "check4WinState";
@@ -726,12 +725,21 @@ void loop() {
         int lastTokenH = getNetVar("4row_lastToken_h").toInt();
         int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
 
-        if (lastTokenX != -1 && lastTokenY != -1 && lastTokenH != -1 && getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
+        moveCounter += 1;
+
+        if ((lastTokenX >= 0 && lastTokenX < 4) && (lastTokenY >= 0 && lastTokenY < 4) && (lastTokenH >= 0 && lastTokenH < 4) && (getNetVar("4row_moveCount").toInt() != moveCounter)) {
           Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: Animation gegnerischer Spieler");
           animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
           newState = "check4WinState";
         }
       }
+
+     currentStateCB2 = digitalRead(CASE_BUTTON_2);
+    if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
+      setNetVar("4row_nextPlayer", String(myPlayer));
+    }
+    // save the the last state
+    lastStateCB1 = currentStateCB1;
     }
 
     if (nextPlayer == ((myPlayer + 1) % 2)) {
@@ -741,6 +749,9 @@ void loop() {
       setNetVar("4row_lastToken_h", String(lastToken[2]));
       setNetVar("4row_player_lastToken", String(myPlayer));
 
+      Serial.println("moveCounter  vor Zug: " + String(moveCounter));
+      moveCounter += 1;
+      Serial.println("moveCounter nach Zug: " + String(moveCounter));
       setNetVar("4row_moveCount", String(moveCounter));
 
       setNetVar("4row_nextPlayer", String(nextPlayer));
@@ -782,8 +793,17 @@ void loop() {
       }
     }
 
-    delay(500);
+    delay(5000);
     resetAllLeds();
+
+        // read the state of the switch/button: -> start new game
+    currentStateCB3 = digitalRead(CASE_BUTTON_3);
+    if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
+      state = "setupGameState";
+    }
+    // save the the last state
+    lastStateCB3 = currentStateCB3;
+
 
   }
 
