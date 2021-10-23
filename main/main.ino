@@ -690,6 +690,8 @@ void loop() {
 
   if (newState == "syncState") {
 
+    nextPlayer = getNetVar("4row_nextPlayer");
+
     if (nextPlayer == myPlayer) {
       Serial.println("State: syncState -> Player: " + String(myPlayer));
       int lastTokenX = getNetVar("4row_lastToken_x").toInt();
