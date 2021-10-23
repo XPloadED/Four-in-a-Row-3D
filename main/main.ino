@@ -725,13 +725,13 @@ void loop() {
         int lastTokenH = getNetVar("4row_lastToken_h").toInt();
         int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
 
-        moveCounter = getNetVar("4row_moveCount").toInt();
-
         if ((lastTokenX >= 0 && lastTokenX < 4) && (lastTokenY >= 0 && lastTokenY < 4) && (lastTokenH >= 0 && lastTokenH < 4) && (getNetVar("4row_moveCount").toInt() != moveCounter)) {
           Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: Animation gegnerischer Spieler");
           animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
           newState = "check4WinState";
         }
+       
+        moveCounter = getNetVar("4row_moveCount").toInt();
       }
 
      currentStateCB2 = digitalRead(CASE_BUTTON_2);
