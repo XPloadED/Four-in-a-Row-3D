@@ -155,9 +155,50 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
+    
+    //local variables for connect animation
+    uint8_t locx = 0;
+    uint8_t locy = 0;
+    uint8_t loch = 0;
+    uint8_t cyclecounter = 0;
+    uint8_t hue = 0;
+    bool direction = true;
+    
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  //WIFI connect animation
+    setLedPair(locx,locy,loch,CHSV(hue++, 255, 255));
+    delay(40);
+    resetLedPair(locx,locy,loch);
+
+    if(locx == 0 && locy > 0){
+      locy -= 1;
+      }
+    if(locx > 0 && locy == 3){
+      locx -= 1;
+      }
+    if(locx == 3 && locy < 3){
+      locy += 1;
+      }
+    //edge case 0,0 being skipped
+    if(locx<3 && locy == 0){
+      locx += 1;
+      }
+
+  if(cyclecounter == 12){
+      if(direction){
+        loch += 1;
+        cyclecounter = 0;
+        }
+      if(not direction){
+        loch -= 1;
+        cyclecounter = 0;
+        }
+      if(loch == 3 || loch == 0){
+      direction = not direction;
+      cyclecounter =0;
+      } 
+    }
+    cyclecounter += 1;
   }
   Serial.println("");
   Serial.print("Connected to WiFi network with IP Address: ");
