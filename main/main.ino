@@ -719,21 +719,20 @@ void loop() {
   if (newState == "syncState") {
     Serial.println("SyncState: lokaler NextPlayer: " + String(nextPlayer));
     if (nextPlayer == myPlayer) {
+      if (winner) {
+        newState = "winnerState";
+      }
       if (getNetVar("4row_nextPlayer").toInt() == myPlayer) {
         Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: " + nextPlayer);
         int lastTokenX = getNetVar("4row_lastToken_x").toInt();
         int lastTokenY = getNetVar("4row_lastToken_y").toInt();
-        int lastTokenH = getNetVar("4row_lastToken_h").toInt();
+        int lastTokenH = getNetVar("4row_lastToken_h").toInt() - 1;
         int playerLastTokenS = getNetVar("4row_player_lastToken").toInt();
 
         if ((lastTokenX >= 0 && lastTokenX < 4) && (lastTokenY >= 0 && lastTokenY < 4) && (lastTokenH >= 0 && lastTokenH < 4) && (getNetVar("4row_moveCount").toInt() != moveCounter)) {
           Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: Animation gegnerischer Spieler");
           animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
-          if (winner) {
-            newState = "winnerState";
-          } else {
-            newState = "check4WinState";
-          }
+          newState = "check4WinState";
 
           moveCounter = getNetVar("4row_moveCount").toInt();
         }
