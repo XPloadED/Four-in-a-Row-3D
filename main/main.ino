@@ -554,7 +554,7 @@ void loop() {
         moveCounter = getNetVar("4row_moveCount").toInt();
         //nextPlayer = getNetVar("4row_nextPlayer").toInt();
         nextPlayer = myPlayer;
-      
+
         newState = "syncState";
 
       }
@@ -700,7 +700,7 @@ void loop() {
       placedToken = false;
       moveCounter += 1;
       nextPlayer = ((myPlayer + 1) % 2);
-      Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer)); 
+      Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer));
       newState = "check4WinState";
     }
     // save the the last state
@@ -732,26 +732,25 @@ void loop() {
           newState = "check4WinState";
         }
       }
-
-      if (nextPlayer == ((myPlayer + 1) % 2)) {
-        Serial.println("SyncState: Entscheidung nächster Spieler: lokaler / *entfernter*: " + String(nextPlayer));
-        setNetVar("4row_lastToken_x", String(lastToken[0]));
-        setNetVar("4row_lastToken_y", String(lastToken[1]));
-        setNetVar("4row_lastToken_h", String(lastToken[2]));
-        setNetVar("4row_player_lastToken", String(myPlayer));
-
-        setNetVar("4row_moveCount", String(moveCounter));
-
-        setNetVar("4row_nextPlayer", String(nextPlayer));
-
-        nextPlayer = myPlayer;
-      }
-
-      //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
-      //      newState = "check4WinState";
-      //    }
-
     }
+
+    if (nextPlayer == ((myPlayer + 1) % 2)) {
+      Serial.println("SyncState: Entscheidung nächster Spieler: lokaler / *entfernter*: " + String(nextPlayer));
+      setNetVar("4row_lastToken_x", String(lastToken[0]));
+      setNetVar("4row_lastToken_y", String(lastToken[1]));
+      setNetVar("4row_lastToken_h", String(lastToken[2]));
+      setNetVar("4row_player_lastToken", String(myPlayer));
+
+      setNetVar("4row_moveCount", String(moveCounter));
+
+      setNetVar("4row_nextPlayer", String(nextPlayer));
+
+      nextPlayer = myPlayer;
+    }
+
+    //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
+    //      newState = "check4WinState";
+    //    }
   }
 
 
