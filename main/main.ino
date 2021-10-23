@@ -799,7 +799,7 @@ void loop() {
         // read the state of the switch/button: -> start new game
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
-      state = "setupGameState";
+      newState = "setupGameState";
     }
     // save the the last state
     lastStateCB3 = currentStateCB3;
