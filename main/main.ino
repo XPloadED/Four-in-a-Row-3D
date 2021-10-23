@@ -21,6 +21,9 @@ const int CASE_BUTTON_1 = 5;
 const int CASE_BUTTON_2 = 4;
 const int CASE_BUTTON_3 = 15;
 
+//Pin number for Potentiometer
+const int POT = 32;
+
 //Pin numbers for button matrix
 byte colPins[ROWS] = {33, 26, 27, 12};
 byte rowPins[COLS] = {22, 21, 19, 18};
@@ -93,7 +96,7 @@ int winningTokens[NUM_TOWER * 4] = {};
 CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
 // var for alternating player
 
-const int myPlayer = 1; // change for second player
+const int myPlayer = 0; // change for second player
 int nextPlayer = -1;
 
 
@@ -134,11 +137,17 @@ CRGB leds[NUM_LEDS];
 void setup() {
   Serial.begin(9600);   // Initialise the serial monitor
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
-  FastLED.setBrightness(50);
+  FastLED.setBrightness(128);
 
   pinMode(CASE_BUTTON_1, INPUT_PULLUP);
   pinMode(CASE_BUTTON_2, INPUT_PULLUP);
   pinMode(CASE_BUTTON_3, INPUT_PULLUP);
+
+  //fix flashing LEDs on startup after powerloss
+  FastLED.clear();
+  FastLED.show();
+  
+  setupGame();
 
 
   //Setup WiFi
@@ -260,7 +269,6 @@ String sendHttpGet(String url) {
     HTTPClient http;
 
     String serverPath = serverName + url;
-    Serial.println("URL: " + url);
     //String serverPath = serverName + "?varName=4row_test";
 
     // Your Domain name with URL path or IP address with path
