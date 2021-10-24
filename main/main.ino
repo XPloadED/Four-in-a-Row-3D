@@ -776,10 +776,12 @@ void loop() {
       }
 
      for(int i = 0; i < 4; i++){
-      setLedPair(i, 3, 3, CHSV(95, 255, 255));
-      resetLedPair(i, 3, 3);
-      setLedPair(i, 3, 3, players[gameState[calcTowerID(i, 3) * 4  + 3]]);
-      delay(200);      
+      for(int b = 0; b < 4; b++){
+      setLedPair(i, b, 3, CHSV(95, 255, 255));
+      delay(50);
+      resetLedPair(i, b, 3);
+      setLedPair(i, b, 3, players[gameState[calcTowerID(i, 3) * 4  + 3]]);
+      }
      }
 
       
