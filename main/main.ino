@@ -56,8 +56,8 @@ int moveCounter = 0;
 
 
 //define starting state
-String lastState = "setupGameState";
-String newState = "setupGameState";
+String lastState = "startup";
+String newState = "startup";
 
 
 //----------------------------------------------------------------------------------------
@@ -390,15 +390,16 @@ void resetAllLeds() {
 void animateGameToken(uint8_t x, uint8_t y, uint8_t player) {
   int towerID = calcTowerID(x, y); //towerID for towerHeight array required
   int time = 100;
+  CHSV selectplayer = CHSV(95, 255, 255);
 
   if (towerHeight[towerID] < 4) {
     int tokenHeight = 3; // starting height -> stone is falling down
-    setLedPair(x, y, tokenHeight, players[player]);
+    setLedPair(x, y, tokenHeight, selectplayer);
     while (tokenHeight > towerHeight[towerID]) {
       delay(time -= 20);
       resetLedPair(x, y, tokenHeight);
       tokenHeight -= 1;
-      setLedPair(x, y, tokenHeight, players[player]);
+      setLedPair(x, y, tokenHeight, selectplayer);
     }
 
     towerHeight[towerID] += 1;
@@ -551,20 +552,20 @@ void loop() {
   //StartUp routine
   if (newState == "startup") {
     Serial.println("State: startup");
-
     for (int towerID = 0; towerID < 16; towerID ++) {
-      playStoneAnimation(towerID, random(0, 3), true, CHSV(random8(), 255, 255));
+      playStoneAnimation(towerID, 0, true, CHSV(random8(), 255, 255));
     }
     for (int towerID = 15; towerID >= 0; towerID --) {
-      playStoneAnimation(random(0, 15), random(0, 3), false, CHSV(random8(), 255, 255));
+      playStoneAnimation(towerID, 0, false, CHSV(random8(), 255, 255));
     }
     for (int towerID = 0; towerID < 16; towerID ++) {
-      playStoneAnimation(towerID, random(0, 3), true, CHSV(random8(), 255, 255));
+      playStoneAnimation(towerID, 0, true, CHSV(random8(), 255, 255));
     }
 
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
     // For now leads into the tower select state, in which the player can select a tower through the button matrix
     resetAllLeds();
+    Serial.println("State: exited startup; New State: setupGameState");
     newState = "setupGameState";
   }
 
@@ -739,6 +740,7 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
+      setLedPair(lastToken[0], lastToken[1],towerHeight[(calcTowerID(lastToken[0], lastToken[1])) - 1], players[myPlayer]);
       placedToken = false;
       nextPlayer = ((myPlayer + 1) % 2);
       Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer));
