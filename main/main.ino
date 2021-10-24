@@ -155,48 +155,48 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
-    
-    //local variables for connect animation
-    uint8_t locx = 0;
-    uint8_t locy = 0;
-    uint8_t loch = 0;
-    uint8_t cyclecounter = 0;
-    uint8_t hue = 0;
-    bool direction = true;
-    
+
+  //local variables for connect animation
+  uint8_t locx = 0;
+  uint8_t locy = 0;
+  uint8_t loch = 0;
+  uint8_t cyclecounter = 0;
+  uint8_t hue = 0;
+  bool direction = true;
+
   while (WiFi.status() != WL_CONNECTED) {
-  //WIFI connect animation
-    setLedPair(locx,locy,loch,CHSV(hue++, 255, 255));
+    //WIFI connect animation
+    setLedPair(locx, locy, loch, CHSV(hue++, 255, 255));
     delay(40);
-    resetLedPair(locx,locy,loch);
+    resetLedPair(locx, locy, loch);
 
-    if(locx == 0 && locy > 0){
+    if (locx == 0 && locy > 0) {
       locy -= 1;
-      }
-    if(locx > 0 && locy == 3){
+    }
+    if (locx > 0 && locy == 3) {
       locx -= 1;
-      }
-    if(locx == 3 && locy < 3){
+    }
+    if (locx == 3 && locy < 3) {
       locy += 1;
-      }
+    }
     //edge case 0,0 being skipped
-    if(locx<3 && locy == 0){
+    if (locx < 3 && locy == 0) {
       locx += 1;
-      }
+    }
 
-  if(cyclecounter == 12){
-      if(direction){
+    if (cyclecounter == 12) {
+      if (direction) {
         loch += 1;
         cyclecounter = 0;
-        }
-      if(not direction){
+      }
+      if (not direction) {
         loch -= 1;
         cyclecounter = 0;
-        }
-      if(loch == 3 || loch == 0){
-      direction = not direction;
-      cyclecounter =0;
-      } 
+      }
+      if (loch == 3 || loch == 0) {
+        direction = not direction;
+        cyclecounter = 0;
+      }
     }
     cyclecounter += 1;
   }
@@ -394,12 +394,21 @@ void animateGameToken(uint8_t x, uint8_t y, uint8_t player) {
 
   if (towerHeight[towerID] < 4) {
     int tokenHeight = 3; // starting height -> stone is falling down
-    setLedPair(x, y, tokenHeight, selectplayer);
+    if (player == myPlayer) {
+      setLedPair(x, y, tokenHeight, selectplayer);
+    } else {
+      setLedPair(x, y, tokenHeight, players[player]);
+    }
+
     while (tokenHeight > towerHeight[towerID]) {
       delay(time -= 20);
       resetLedPair(x, y, tokenHeight);
       tokenHeight -= 1;
-      setLedPair(x, y, tokenHeight, selectplayer);
+      if (player == myPlayer) {
+        setLedPair(x, y, tokenHeight, selectplayer);
+      } else {
+        setLedPair(x, y, tokenHeight, players[player]);
+      }
     }
 
     towerHeight[towerID] += 1;
@@ -740,7 +749,7 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      setLedPair(lastToken[0], lastToken[1],towerHeight[(calcTowerID(lastToken[0], lastToken[1])) - 1], players[myPlayer]);
+      setLedPair(lastToken[0], lastToken[1], towerHeight[(calcTowerID(lastToken[0], lastToken[1])) - 1], players[myPlayer]);
       placedToken = false;
       nextPlayer = ((myPlayer + 1) % 2);
       Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer));
