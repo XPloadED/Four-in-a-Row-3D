@@ -564,12 +564,12 @@ void loop() {
     for (int towerID = 0; towerID < 16; towerID ++) {
       playStoneAnimation(towerID, 0, true, CHSV(random8(), 255, 255));
     }
-    for (int towerID = 15; towerID >= 0; towerID --) {
+    /*for (int towerID = 15; towerID >= 0; towerID --) {
       playStoneAnimation(towerID, 0, false, CHSV(random8(), 255, 255));
     }
     for (int towerID = 0; towerID < 16; towerID ++) {
       playStoneAnimation(towerID, 0, true, CHSV(random8(), 255, 255));
-    }
+    }*/
 
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
     // For now leads into the tower select state, in which the player can select a tower through the button matrix
@@ -749,7 +749,7 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      setLedPair(lastToken[0], lastToken[1], towerHeight[(calcTowerID(lastToken[0], lastToken[1])) - 1], players[myPlayer]);
+      setLedPair(lastToken[0], lastToken[1], lastToken[2]-1, players[myPlayer]);
       placedToken = false;
       nextPlayer = ((myPlayer + 1) % 2);
       Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer));
