@@ -774,6 +774,15 @@ void loop() {
       if (winner) {
         newState = "winnerState";
       }
+
+     for(int i = 0; i < 4; i++){
+      setLedPair(i, 3, 3, CHSV(95, 255, 255));
+      resetLedPair(i, 3, 3);
+      setLedPair(i, 3, 3, players[gameState[calcTowerID(i, 3) * 4  + 3]]);
+      delay(200);      
+     }
+
+      
       if (getNetVar("4row_nextPlayer").toInt() == myPlayer) {
         Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: " + nextPlayer);
         int lastTokenX = getNetVar("4row_lastToken_x").toInt();
