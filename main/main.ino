@@ -48,16 +48,12 @@ unsigned long timerDelay = 5000;
 
 //----------------------------------------------------------------------------------------
 //State configuration
-
-bool activeGame = false;
-int gameID = 0;
-
 int moveCounter = 0;
 
-
 //define starting state
-String lastState = "startup";
 String newState = "startup";
+
+bool dualBoardMode = true;
 
 
 //----------------------------------------------------------------------------------------
@@ -87,8 +83,6 @@ int lastToken[3] = {};
 int playerLastToken = -1;
 
 // array for winning row
-//int winningTokens[4][3] = {};
-bool winner = false;
 int winningTokens[NUM_TOWER * 4] = {};
 
 //----------------------------------------------------------------------------------------
@@ -97,9 +91,8 @@ int winningTokens[NUM_TOWER * 4] = {};
 CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
 // var for alternating player
 
-const int myPlayer = 1; // change for second player
+int myPlayer = 0; // change for second player
 int nextPlayer = -1;
-
 
 
 //----------------------------------------------------------------------------------------
@@ -566,10 +559,10 @@ void loop() {
     }
     /*for (int towerID = 15; towerID >= 0; towerID --) {
       playStoneAnimation(towerID, 0, false, CHSV(random8(), 255, 255));
-    }
-    for (int towerID = 0; towerID < 16; towerID ++) {
+      }
+      for (int towerID = 0; towerID < 16; towerID ++) {
       playStoneAnimation(towerID, 0, true, CHSV(random8(), 255, 255));
-    }*/
+      }*/
 
     // End of the startup routine, later switch to gamemode [singleplayer/multiplayer/atmospheric lamp]
     // For now leads into the tower select state, in which the player can select a tower through the button matrix
@@ -584,35 +577,57 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      Serial.println("State: setupGameState -> Button 1 gedrückt!");
-      if (getNetVar("4row_moveCount").toInt() != 0) {
+      if (dualBoardMode) {
+        Serial.println("State: setupGameState -> Button 1 gedrückt!");
+        if (getNetVar("4row_moveCount").toInt() != 0) {
 
-        //Set moveCounter to 0 and send to server
-        moveCounter = 0;
-        setNetVar("4row_moveCount", String(moveCounter));
+          //Set moveCounter to 0 and send to server
+          moveCounter = 0;
+          setNetVar("4row_moveCount", String(moveCounter));
 
-        //Set playerToken -> change player
-        nextPlayer = myPlayer; // Player selection
-        setNetVar("4row_nextPlayer", String(nextPlayer));
+          //Set playerToken -> change player
+          nextPlayer = myPlayer; // Player selection
+          setNetVar("4row_nextPlayer", String(nextPlayer));
 
-        //reset lastToken
-        setNetVar("4row_lastToken_x", String(-1));
-        setNetVar("4row_lastToken_y", String(-1));
-        setNetVar("4row_lastToken_h", String(-1));
-        setNetVar("4row_player_lastToken", String(-1));
+          //reset lastToken
+          setNetVar("4row_lastToken_x", String(-1));
+          setNetVar("4row_lastToken_y", String(-1));
+          setNetVar("4row_lastToken_h", String(-1));
+          setNetVar("4row_player_lastToken", String(-1));
+          Serial.println("State: exited setupGameState; New State: PickTowerState");
+          newState = "pickTowerState";
+        } else {
+          moveCounter = getNetVar("4row_moveCount").toInt();
+          nextPlayer = myPlayer;
+          Serial.println("State: exited setupGameState; New State: syncState");
+          newState = "syncState";
 
-        newState = "pickTowerState";
+        }
       } else {
-        moveCounter = getNetVar("4row_moveCount").toInt();
-        //nextPlayer = getNetVar("4row_nextPlayer").toInt();
+        moveCounter = 0;
+        setLastToken(-1, -1, 0);
+        playerLastToken = -1;
         nextPlayer = myPlayer;
 
-        newState = "syncState";
-
+        Serial.println("State: exited setupGameState; New State: PickTowerState");
+        newState = "pickTowerState";
       }
     }
     // save the the last state
     lastStateCB1 = currentStateCB1;
+
+    // read the state of the switch/button: -> select mode => Multi/Single mode
+    currentStateCB2 = digitalRead(CASE_BUTTON_2);
+    if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
+      Serial.println("State: setupGameState -> Button 2 gedrückt!");
+      if (dualBoardMode) {
+        Serial.println("Mode: switched");
+        dualBoardMode = !dualBoardMode;
+      }
+
+    }
+    // save the the last state
+    lastStateCB2 = currentStateCB2;
 
     // read the state of the switch/button:
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
@@ -631,6 +646,7 @@ void loop() {
       setNetVar("4row_lastToken_h", String(-1));
       setNetVar("4row_player_lastToken", String(-1));
 
+      Serial.println("State: exited setupGameState; New State: PickTowerState");
       newState = "pickTowerState";
 
     }
@@ -749,44 +765,40 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      setLedPair(lastToken[0], lastToken[1], lastToken[2]-1, players[myPlayer]);
-      placedToken = false;
-      nextPlayer = ((myPlayer + 1) % 2);
-      Serial.println("pickTowerState:  neuer Spieler -> " + String(nextPlayer));
-      newState = "check4WinState";
+
+
+      uint8_t lastTokenX, lastTokenY, lastTokenH = -1;
+      getLastToken(&lastTokenX, &lastTokenY, &lastTokenH);
+
+      if (gameState[calcTowerID(lastTokenX, lastTokenY) * 4 + lastTokenH - 1] == myPlayer) {
+        setLedPair(lastTokenX, lastTokenY, lastTokenH - 1, players[myPlayer]);
+
+        placedToken = false; // reset placedToken
+        nextPlayer = ((myPlayer + 1) % 2); //Set nextPlayer to the new player
+        Serial.println("State: exited pickTowerState; New State: check4WinState");
+        newState = "check4WinState";
+      }
     }
     // save the the last state
     lastStateCB1 = currentStateCB1;
 
-    // read the state of the switch/button: -> reset button
-    currentStateCB3 = digitalRead(CASE_BUTTON_3);
-    if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
-
-    }
-    // save the the last state
-    lastStateCB3 = currentStateCB3;
-
   }
 
   if (newState == "syncState") {
-    Serial.println("SyncState: lokaler NextPlayer: " + String(nextPlayer));
     if (nextPlayer == myPlayer) {
-      if (winner) {
-        newState = "winnerState";
+
+      for (int i = 0; i < 4; i++) {
+        for (int b = 0; b < 4; b++) {
+          setLedPair(i, b, 3, CHSV(95, 255, 255));
+          delay(50);
+          resetLedPair(i, b, 3);
+          setLedPair(i, b, 3, players[gameState[calcTowerID(i, 3) * 4  + 3]]);
+        }
       }
 
-     for(int i = 0; i < 4; i++){
-      for(int b = 0; b < 4; b++){
-      setLedPair(i, b, 3, CHSV(95, 255, 255));
-      delay(50);
-      resetLedPair(i, b, 3);
-      setLedPair(i, b, 3, players[gameState[calcTowerID(i, 3) * 4  + 3]]);
-      }
-     }
 
-      
       if (getNetVar("4row_nextPlayer").toInt() == myPlayer) {
-        Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: " + nextPlayer);
+        Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter ");
         int lastTokenX = getNetVar("4row_lastToken_x").toInt();
         int lastTokenY = getNetVar("4row_lastToken_y").toInt();
         int lastTokenH = getNetVar("4row_lastToken_h").toInt() - 1;
@@ -795,17 +807,12 @@ void loop() {
         if ((lastTokenX >= 0 && lastTokenX < 4) && (lastTokenY >= 0 && lastTokenY < 4) && (lastTokenH >= 0 && lastTokenH < 4) && (getNetVar("4row_moveCount").toInt() != moveCounter)) {
           Serial.println("SyncState: Entscheidung nächster Spieler: *lokaler* / entfernter: Animation gegnerischer Spieler");
           animateGameToken(lastTokenX, lastTokenY, playerLastTokenS);
-          newState = "check4WinState";
-
           moveCounter = getNetVar("4row_moveCount").toInt();
+
+          Serial.println("change state: syncState -> check4winState");
+          newState = "check4WinState";
         }
 
-        currentStateCB2 = digitalRead(CASE_BUTTON_2);
-        if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
-          setNetVar("4row_nextPlayer", String(myPlayer));
-        }
-        // save the the last state
-        lastStateCB1 = currentStateCB1;
       }
     }
 
@@ -815,40 +822,62 @@ void loop() {
       setNetVar("4row_lastToken_y", String(lastToken[1]));
       setNetVar("4row_lastToken_h", String(lastToken[2]));
       setNetVar("4row_player_lastToken", String(myPlayer));
-
-      Serial.println("moveCounter  vor Zug: " + String(moveCounter));
       moveCounter += 1;
-      Serial.println("moveCounter nach Zug: " + String(moveCounter));
-      setNetVar("4row_moveCount", String(moveCounter));
 
+      setNetVar("4row_moveCount", String(moveCounter));
       setNetVar("4row_nextPlayer", String(nextPlayer));
 
       nextPlayer = myPlayer;
     }
 
-    //    if (getNetVar("4row_moveCount").toInt() == moveCounter + 1) {
-    //      newState = "check4WinState";
-    //    }
+    // read the state of the switch/button: -> reset button
+    currentStateCB3 = digitalRead(CASE_BUTTON_3);
+    if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
+      if (lastToken[0] == -1) {
+        setLastToken(0, 3, 1);
+      }
+
+      setNetVar("4row_lastToken_x", String(0));
+      setNetVar("4row_lastToken_y", String(0));
+      setNetVar("4row_lastToken_h", String(towerHeight[0] + 1));
+      setNetVar("4row_player_lastToken", String(myPlayer + 1));
+
+      setNetVar("4row_moveCount", String(moveCounter + 1));
+      setNetVar("4row_nextPlayer", String(myPlayer));
+    }
+    // save the the last state
+    lastStateCB3 = currentStateCB3;
+
   }
 
 
 
   if (newState == "check4WinState") {
     //Serial.println("State: check4WinState");
-    uint8_t lastTokenXn, lastTokenYn, lastTokenHn = -1;
+    uint8_t lastTokenX, lastTokenY, lastTokenH = -1;
 
-    getLastToken(&lastTokenXn, &lastTokenYn, &lastTokenHn);
+    getLastToken(&lastTokenX, &lastTokenY, &lastTokenH);
 
-    Serial.println("LastToken: " + String(lastTokenXn) + ", " + String(lastTokenYn) + ", " + String(lastTokenHn));
+    Serial.println("check4WinState: check LastToken: " + String(lastTokenX) + ", " + String(lastTokenY) + ", " + String(lastTokenH));
 
-    if (checkForWinner(lastTokenXn, lastTokenYn, lastTokenHn - 1, playerLastToken)  ) { // check if there is already a winner of the game
-      winner = true; //if there is a winner change the state to winner
-    }
-    if (nextPlayer == myPlayer) {
-      newState = "pickTowerState";
-    }
-    if (nextPlayer == ((myPlayer + 1) % 2)) {
-      newState = "syncState";
+    if (checkForWinner(lastTokenX, lastTokenY, lastTokenH - 1, playerLastToken)  ) { // check if there is already a winner of the game
+
+      Serial.println("Winner Found!");
+      Serial.println("change state: check4winState -> winnerState");
+      newState = "winnerState";
+    } else {
+      if (dualBoardMode) {
+        if (nextPlayer == myPlayer) {
+          newState = "pickTowerState";
+        }
+        if (nextPlayer == ((myPlayer + 1) % 2)) {
+          newState = "syncState";
+        }
+      } else {
+        myPlayer = nextPlayer;
+        newState = "pickTowerState";
+      }
+
     }
 
 
