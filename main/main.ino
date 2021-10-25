@@ -570,15 +570,20 @@ void loop() {
     // For now leads into the tower select state, in which the player can select a tower through the button matrix
     resetAllLeds();
     Serial.println("State: exited startup; New State: setupGameState");
+    for (int i = 0; i < 4; i++) {
+      for (int b = 0; b < 4; b++) {
+        setLedPair(i, b, 3, CHSV(50 + 50 * gameMode, 255, 255));
+      }
+    }
     newState = "setupGameState";
   }
 
   if (newState == "setupGameState") {
-    setupGame();
 
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
+      setupGame();
       if (gameMode == 0) {
         Serial.println("State: setupGameState -> Button 1 gedrückt!");
         if (getNetVar("4row_moveCount").toInt() != 0) {
@@ -605,8 +610,8 @@ void loop() {
           newState = "syncState";
 
         }
-      } 
-      if (gameMode == 1){
+      }
+      if (gameMode == 1) {
         moveCounter = 0;
         setLastToken(-1, -1, 0);
         playerLastToken = -1;
@@ -615,10 +620,11 @@ void loop() {
         Serial.println("State: exited setupGameState; New State: PickTowerState");
         newState = "pickTowerState";
       }
-      if (gameMode == 2){
+      if (gameMode == 2) {
         Serial.println("State: exited setupGameState; New State: light");
         newState = "light";
       }
+      resetAllLeds();
     }
     // save the the last state
     lastStateCB1 = currentStateCB1;
@@ -627,8 +633,15 @@ void loop() {
     currentStateCB2 = digitalRead(CASE_BUTTON_2);
     if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
       Serial.println("State: setupGameState -> Button 2 gedrückt!");
-      Serial.println("Mode: switched");
+      Serial.println("Mode: switched" + String(gameMode));
       gameMode = (gameMode + 1) % 3;
+
+      resetAllLeds();
+      for (int i = 0; i < 4; i++) {
+        for (int b = 0; b < 4; b++) {
+          setLedPair(i, b, 3, CHSV(50 + 50 * gameMode, 255, 255));
+        }
+      }
 
     }
     // save the the last state
@@ -797,7 +810,7 @@ void loop() {
           setLedPair(i, b, 3, CHSV(95, 255, 255));
           delay(50);
           resetLedPair(i, b, 3);
-          setLedPair(i, b, 3, players[gameState[calcTowerID(i, 3) * 4  + 3]]);
+          setLedPair(i, b, 3, players[gameState[calcTowerID(i, b) * 4  + 3]]);
         }
       }
 
@@ -832,8 +845,10 @@ void loop() {
       setNetVar("4row_moveCount", String(moveCounter));
       setNetVar("4row_nextPlayer", String(nextPlayer));
 
-      if (gameWinner) {  // exit condition if winner is myPlayer -> dont stay in syncState
+      Serial.println("SyncState: gameWinner: " + String(gameWinner));
+      if (gameWinner == 1) {  // exit condition if winner is myPlayer -> dont stay in syncState
         newState = "check4WinState";
+        Serial.println("change state: syncState (winner found) -> check4WinState: " + newState);
       }
 
       nextPlayer = myPlayer;
@@ -874,14 +889,24 @@ void loop() {
 
     Serial.println("check4WinState: check LastToken: " + String(lastTokenX) + ", " + String(lastTokenY) + ", " + String(lastTokenH));
 
-    if (checkForWinner(lastTokenX, lastTokenY, lastTokenH - 1, playerLastToken)  ) { // check if there is already a winner of the game
+    if (gameWinner == 1) { // if winner is myPlayer -> go first into syncState to sync the lastToken to Server and then go into winnerState
+      Serial.println("change state: check4winState -> winnerState: " + newState);
+      newState = "winnerState";
+    }
 
-      Serial.println("Winner Found!");
-      Serial.println("change state: check4winState -> winnerState");
-      if (gameWinner) { // if winner is myPlayer -> go first into syncState to sync the lastToken to Server and then go into winnerState
-        newState = "winnerState";
+    if (checkForWinner(lastTokenX, lastTokenY, lastTokenH - 1, playerLastToken)  ) { // check if there is already a winner of the game
+      if (nextPlayer == (myPlayer + 1) % 2) {
+        setNetVar("4row_lastToken_x", String(lastToken[0]));
+        setNetVar("4row_lastToken_y", String(lastToken[1]));
+        setNetVar("4row_lastToken_h", String(lastToken[2]));
+        setNetVar("4row_player_lastToken", String(myPlayer));
+        moveCounter += 1;
+
+        setNetVar("4row_moveCount", String(moveCounter));
+        setNetVar("4row_nextPlayer", String(nextPlayer));
       }
-      gameWinner = true;
+      newState = "winnerState";
+
     } else {
       if (gameMode == 0) {
         if (nextPlayer == myPlayer) {
@@ -928,7 +953,7 @@ void loop() {
 
   }
 
-  if(newState == "light"){
+  if (newState == "light") {
     resetAllLeds();
   }
 
