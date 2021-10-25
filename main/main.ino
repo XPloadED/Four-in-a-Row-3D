@@ -42,18 +42,19 @@ String serverName = "https://ubicomp.net/sw/db1/var2db.php";
 unsigned long lastTime = 0;
 // Timer set to 10 minutes (600000):
 //unsigned long timerDelay = 600000;
-// Set timer to 5 seconds (5000)
+// Set timer to 5 seco  nds (5000)
 unsigned long timerDelay = 5000;
 
 
 //----------------------------------------------------------------------------------------
 //State configuration
 int moveCounter = 0;
+bool gameWinner = false;
 
 //define starting state
 String newState = "startup";
 
-bool dualBoardMode = true;
+int  gameMode =  0;
 
 
 //----------------------------------------------------------------------------------------
@@ -211,6 +212,7 @@ void setupGame() {
     winningTokens[j] = 0; // reset winningTokens array
   }
   resetAllLeds();
+  gameWinner = false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -577,7 +579,7 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
-      if (dualBoardMode) {
+      if (gameMode == 0) {
         Serial.println("State: setupGameState -> Button 1 gedrückt!");
         if (getNetVar("4row_moveCount").toInt() != 0) {
 
@@ -603,7 +605,8 @@ void loop() {
           newState = "syncState";
 
         }
-      } else {
+      } 
+      if (gameMode == 1){
         moveCounter = 0;
         setLastToken(-1, -1, 0);
         playerLastToken = -1;
@@ -611,6 +614,10 @@ void loop() {
 
         Serial.println("State: exited setupGameState; New State: PickTowerState");
         newState = "pickTowerState";
+      }
+      if (gameMode == 2){
+        Serial.println("State: exited setupGameState; New State: light");
+        newState = "light";
       }
     }
     // save the the last state
@@ -620,10 +627,8 @@ void loop() {
     currentStateCB2 = digitalRead(CASE_BUTTON_2);
     if (lastStateCB2 == LOW && currentStateCB2 == HIGH) {
       Serial.println("State: setupGameState -> Button 2 gedrückt!");
-      if (dualBoardMode) {
-        Serial.println("Mode: switched");
-        dualBoardMode = !dualBoardMode;
-      }
+      Serial.println("Mode: switched");
+      gameMode = (gameMode + 1) % 3;
 
     }
     // save the the last state
@@ -827,12 +832,21 @@ void loop() {
       setNetVar("4row_moveCount", String(moveCounter));
       setNetVar("4row_nextPlayer", String(nextPlayer));
 
+      if (gameWinner) {  // exit condition if winner is myPlayer -> dont stay in syncState
+        newState = "check4WinState";
+      }
+
       nextPlayer = myPlayer;
     }
+
+    Serial.println("State: syncState -> Simulation nächster Spieler EIN");
+    delay(500);
 
     // read the state of the switch/button: -> reset button
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
+      Serial.println("State: syncState -> Simulation nächster Spieler AUS");
+      setNetVar("4row_lastToken_x", String(lastToken[0]));
       if (lastToken[0] == -1) {
         setLastToken(0, 3, 1);
       }
@@ -864,16 +878,20 @@ void loop() {
 
       Serial.println("Winner Found!");
       Serial.println("change state: check4winState -> winnerState");
-      newState = "winnerState";
+      if (gameWinner) { // if winner is myPlayer -> go first into syncState to sync the lastToken to Server and then go into winnerState
+        newState = "winnerState";
+      }
+      gameWinner = true;
     } else {
-      if (dualBoardMode) {
+      if (gameMode == 0) {
         if (nextPlayer == myPlayer) {
           newState = "pickTowerState";
         }
         if (nextPlayer == ((myPlayer + 1) % 2)) {
           newState = "syncState";
         }
-      } else {
+      }
+      if (gameMode == 1) {
         myPlayer = nextPlayer;
         newState = "pickTowerState";
       }
@@ -895,8 +913,9 @@ void loop() {
       }
     }
 
-    delay(5000);
+    delay(100);
     resetAllLeds();
+    delay(100);
 
     // read the state of the switch/button: -> start new game
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
@@ -907,6 +926,10 @@ void loop() {
     lastStateCB3 = currentStateCB3;
 
 
+  }
+
+  if(newState == "light"){
+    resetAllLeds();
   }
 
 }
