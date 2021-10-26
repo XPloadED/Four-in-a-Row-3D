@@ -94,6 +94,9 @@ int winningTokens[NUM_TOWER * 4] = {};
 CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
 int brightness = 150;
 int oldbrightness = 150;
+
+unsigned long currentTime;
+unsigned long previousTime;
 // var for alternating player
 
 int myPlayer = 0; // change for second player
@@ -147,6 +150,8 @@ void setup() {
   FastLED.show();
 
   setupGame();
+  currentTime = millis();
+  previousTime = 0;
 
   xTaskCreate(
     potAction,
@@ -157,7 +162,27 @@ void setup() {
     NULL
     );
 
-  //Setup WiFi
+  connectWifi();
+}
+
+//----------------------------------------------------------------------------------------
+//setup game settings
+void setupGame() {
+  for (int i = 0; i < NUM_TOWER; i++) {
+    towerHeight[i] = 0; //height per tower at startup is 0
+  }
+  for (int j = 0; j < NUM_TOWER * 4; j++) {
+    gameState[j] = -1;  //-1 -> means no player, 0 -> player 1, 1 -> player 2
+    winningTokens[j] = 0; // reset winningTokens array
+  }
+  resetAllLeds();
+  gameWinner = false;
+}
+
+//----------------------------------------------------------------------------------------
+//connect to wifi, true if successful
+bool connectWifi(){
+    //Setup WiFi
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
@@ -169,8 +194,9 @@ void setup() {
   uint8_t cyclecounter = 0;
   uint8_t hue = 0;
   bool direction = true;
-
-  while (WiFi.status() != WL_CONNECTED) {
+  currentTime = millis();
+  previousTime = millis();
+  while (WiFi.status() != WL_CONNECTED && currentTime - previousTime < 10000) {
     //WIFI connect animation
     setLedPair(locx, locy, loch, CHSV(hue++, 255, 255));
     delay(40);
@@ -205,27 +231,26 @@ void setup() {
       }
     }
     cyclecounter += 1;
+    currentTime = millis();
   }
-  Serial.println("");
-  Serial.print("Connected to WiFi network with IP Address: ");
-  Serial.println(WiFi.localIP());
+  currentTime = millis();
+  previousTime = millis();
 
-  Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
-}
+  if(WiFi.status() != WL_CONNECTED){
+    Serial.println("No Wifi Connection established, continuing ...");
+    displayError();
+    return false;
+    } else{
+        Serial.println("");
+        Serial.print("Connected to WiFi network with IP Address: ");
+        Serial.println(WiFi.localIP());
 
-//----------------------------------------------------------------------------------------
-//setup game settings
-void setupGame() {
-  for (int i = 0; i < NUM_TOWER; i++) {
-    towerHeight[i] = 0; //height per tower at startup is 0
+        Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
+        displaySuccess();
+        return true;
+      }
+
   }
-  for (int j = 0; j < NUM_TOWER * 4; j++) {
-    gameState[j] = -1;  //-1 -> means no player, 0 -> player 1, 1 -> player 2
-    winningTokens[j] = 0; // reset winningTokens array
-  }
-  resetAllLeds();
-  gameWinner = false;
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -558,6 +583,23 @@ int countToken(uint8_t x, uint8_t y, uint8_t h, int delta_x, int delta_y, int de
   }
 }
 
+void displayError(){
+  for(int i = 0; i < 128; i++){
+    leds[i] = CRGB::Red;
+    }
+    FastLED.show();
+    delay(1000);
+    
+  }
+
+void displaySuccess(){
+  for(int i = 0; i < 128; i++){
+    leds[i] = CRGB::Green;
+    }
+    FastLED.show();
+    delay(1000);  
+  }
+
 void potAction(void * parameters){
     for( ;; ){
       potVal = analogRead(POT);
@@ -619,9 +661,20 @@ void loop() {
     // read the state of the switch/button: -> select button
     currentStateCB1 = digitalRead(CASE_BUTTON_1);
     if (lastStateCB1 == LOW && currentStateCB1 == HIGH) {
+
       setupGame();
       if (gameMode == 0) {
         Serial.println("State: setupGameState -> Button 1 gedrückt!");
+        if(WiFi.status() != WL_CONNECTED){
+          //Trying once more
+            WiFi.disconnect();
+            WiFi.begin(ssid, password);
+        }
+        if(WiFi.status() != WL_CONNECTED){
+            Serial.println("Slected Multiplayer but Wifi is unconnected! Restarting");
+            displayError();
+            ESP.restart();
+        }
         if (getNetVar("4row_moveCount").toInt() != 0) {
           resetAllLeds();
           //Set moveCounter to 0 and send to server
