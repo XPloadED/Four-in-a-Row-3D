@@ -23,6 +23,7 @@ const int CASE_BUTTON_3 = 15;
 
 //Pin number for Potentiometer
 const int POT = 32;
+int potVal = 0;
 
 //Pin numbers for button matrix
 byte colPins[ROWS] = {33, 26, 27, 12};
@@ -91,6 +92,8 @@ int winningTokens[NUM_TOWER * 4] = {};
 //player settings
 //color of players 0 and 1
 CHSV players[NUM_PLAYER] = {CHSV(150, 255, 255), CHSV(255, 255, 255)};
+int brightness = 150;
+int oldbrightness = 150;
 // var for alternating player
 
 int myPlayer = 0; // change for second player
@@ -133,7 +136,7 @@ CRGB leds[NUM_LEDS];
 void setup() {
   Serial.begin(9600);   // Initialise the serial monitor
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
-  FastLED.setBrightness(128);
+  FastLED.setBrightness(brightness);
 
   pinMode(CASE_BUTTON_1, INPUT_PULLUP);
   pinMode(CASE_BUTTON_2, INPUT_PULLUP);
@@ -145,6 +148,14 @@ void setup() {
 
   setupGame();
 
+  xTaskCreate(
+    potAction,
+    "parallel potentiometer interaction",
+    1000,
+    NULL,
+    1,
+    NULL
+    );
 
   //Setup WiFi
   WiFi.mode(WIFI_STA);
@@ -546,6 +557,30 @@ int countToken(uint8_t x, uint8_t y, uint8_t h, int delta_x, int delta_y, int de
     return 0; // return 0 if token is out of bounderies
   }
 }
+
+void potAction(void * parameters){
+    for( ;; ){
+      potVal = analogRead(POT);
+      brightness = map(potVal, 0, 4096, 0, 255);
+      //care for fluctuations and slight turns
+      if(brightness - oldbrightness > 3 || brightness - oldbrightness < -3){
+        //adjusts max and min values to fluctuation checks
+        if(brightness < 5){
+          brightness = 0;
+          }
+        if(brightness > 250){
+          brightness = 255;
+          }
+        FastLED.setBrightness(brightness);
+        FastLED.show();
+        oldbrightness =  brightness;
+        Serial.print("Brightness adjusted: ");        
+        Serial.println(brightness);
+        }
+      vTaskDelay(50);
+      }
+  
+  }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
