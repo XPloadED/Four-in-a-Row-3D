@@ -985,7 +985,7 @@ void loop() {
     }
 
     if (checkForWinner(lastTokenX, lastTokenY, lastTokenH - 1, playerLastToken)  ) { // check if there is already a winner of the game
-      if (nextPlayer == (myPlayer + 1) % 2) {
+      if (nextPlayer == (myPlayer + 1) % 2 && gameMode == 0) {
         setNetVar("4row_lastToken_x", String(lastToken[0]));
         setNetVar("4row_lastToken_y", String(lastToken[1]));
         setNetVar("4row_lastToken_h", String(lastToken[2]));
