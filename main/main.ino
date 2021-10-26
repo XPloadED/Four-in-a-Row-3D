@@ -55,6 +55,7 @@ bool gameWinner = false;
 String newState = "startup";
 
 int  gameMode =  0;
+int color = 0;
 
 
 //----------------------------------------------------------------------------------------
@@ -587,7 +588,7 @@ void loop() {
       if (gameMode == 0) {
         Serial.println("State: setupGameState -> Button 1 gedrückt!");
         if (getNetVar("4row_moveCount").toInt() != 0) {
-
+          resetAllLeds();
           //Set moveCounter to 0 and send to server
           moveCounter = 0;
           setNetVar("4row_moveCount", String(moveCounter));
@@ -650,6 +651,7 @@ void loop() {
     // read the state of the switch/button:
     currentStateCB3 = digitalRead(CASE_BUTTON_3);
     if (lastStateCB3 == LOW && currentStateCB3 == HIGH) {
+      resetAllLeds();
       Serial.println("State: setupGameState -> Button 3 gedrückt!");
       moveCounter = 0;
       setNetVar("4row_moveCount", String(moveCounter));
@@ -954,7 +956,10 @@ void loop() {
   }
 
   if (newState == "light") {
-    resetAllLeds();
+    for (int towerID = 0; towerID < 16; towerID ++) {
+      playStoneAnimation(towerID, 0, true, CHSV(color, 255, 255));
+      color = (color + 10) % 256;
+    }
   }
 
 }
